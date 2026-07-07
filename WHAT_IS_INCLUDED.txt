@@ -1,0 +1,37 @@
+CRISPR-UniPredict - source code bundle
+======================================
+
+This archive contains the source code used to produce the results in the
+thesis (on-target efficiency + off-target activity prediction for CRISPR-Cas9).
+
+INCLUDED
+  CRISPR-UniPredict/        full project source
+    models/*.py             on-target and off-target network definitions,
+                            encoding, fusion, BiGRU / MSC / RNA-FM modules
+    training/               training loops
+    utils/                  data loading, preprocessing, encoding helpers
+    configs/                model and training configuration files
+    scripts/                run / evaluation scripts
+    api/, web_app/          serving code
+    tests/, notebooks/      tests and analysis notebooks
+    *.py (top level)        training, evaluation and calibration entry points
+                            (e.g. calibrate_off_target.py, evaluate_*_dedicated.py,
+                            run_offtarget_multiseed.py, comprehensive_evaluation.py)
+    requirements.txt, environment.yml, Dockerfile, docker-compose.yml
+    docs/ and *.md          documentation and guides
+    paper.tex, paper_draft.md
+  dataset_copy_scripts/     helper scripts used to stage the datasets
+
+EXCLUDED (large / regenerable, not source code)
+  venv/                     virtual environment  -> recreate with:
+                              pip install -r CRISPR-UniPredict/requirements.txt
+                              (or) conda env create -f CRISPR-UniPredict/environment.yml
+  models/checkpoints/       trained model weights (~4.9 GB)
+  models/pretrained/        pretrained RNA-FM weights (~1.2 GB)
+  data/                     CRISPR-HNN and CCLMoff datasets (~2 GB);
+                            sources are listed in the thesis and project docs
+  *.log                     large training logs
+  __pycache__/, .git/       caches and version-control internals
+
+Not included here (available separately in "both paper models" if needed):
+  RNA-FM-main/  dependencies/  legacy_experiments/
