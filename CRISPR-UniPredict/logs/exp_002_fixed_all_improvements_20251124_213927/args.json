@@ -1,0 +1,7 @@
+{
+  "config": "configs/model_config.yaml",
+  "resume": null,
+  "experiment_name": "exp_002_fixed_all_improvements",
+  "debug": false,
+  "seed": 42
+}

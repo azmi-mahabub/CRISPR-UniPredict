@@ -1,0 +1,26 @@
+Data directory structure:
+ Volume in drive C is me
+ Volume Serial Number is 4E6E-8E89
+
+ Directory of C:\Users\shahe\Desktop\both paper models\CRISPR-UniPredict\data\raw\cclmoff
+
+11/19/2025  08:10 PM       714,692,329 09212024_CCLMoff_dataset.csv
+               1 File(s)    714,692,329 bytes
+
+ Directory of C:\Users\shahe\Desktop\both paper models\CRISPR-UniPredict\data\raw\crispr_hnn
+
+11/19/2025  08:31 PM         2,161,443 ESP(n=58616).csv
+11/19/2025  08:31 PM           156,406 HCT116(n=4239).csv
+11/19/2025  08:31 PM           298,815 HELA(n=8101).csv
+11/19/2025  08:31 PM         2,097,628 HF(n=56887).csv
+11/19/2025  08:31 PM            76,589 HL60(n=2076).csv
+11/19/2025  08:32 PM         1,387,757 Sniper-Cas9(n=37794).csv
+11/19/2025  08:32 PM         1,127,323 SpCas9-NG(n=30585).csv
+11/19/2025  08:32 PM               123 test_ont.csv
+11/19/2025  08:32 PM         2,049,713 WT(n=55603).csv
+11/19/2025  08:32 PM         1,388,117 xCas(n=37738).csv
+              10 File(s)     10,743,914 bytes
+
+     Total Files Listed:
+              11 File(s)    725,436,243 bytes
+               0 Dir(s)  12,959,535,104 bytes free

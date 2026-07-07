@@ -1,0 +1,7 @@
+{
+  "config": "configs/model_config.yaml",
+  "resume": null,
+  "experiment_name": "full_training_2026_04_16",
+  "debug": false,
+  "seed": 42
+}

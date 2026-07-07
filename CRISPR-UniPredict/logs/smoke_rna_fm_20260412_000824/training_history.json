@@ -1,0 +1,116 @@
+{
+  "train": [
+    {
+      "total_loss": 0.2650882098823786,
+      "on_target_loss": 0.0,
+      "off_target_loss": 0.5301764197647572,
+      "batch_count": 8
+    },
+    {
+      "total_loss": 0.010073560735057718,
+      "on_target_loss": 0.0,
+      "off_target_loss": 0.020147121470115437,
+      "batch_count": 8
+    }
+  ],
+  "val": [
+    {
+      "total_loss": 0.07341305760201067,
+      "on_target_loss": 0.0,
+      "off_target_loss": 0.14682611520402133,
+      "batch_count": 8,
+      "on_target_spearman_r": 0.0,
+      "on_target_spearman_pval": 1.0,
+      "on_target_pearson_r": 0.0,
+      "on_target_pearson_pval": 1.0,
+      "on_target_mae": 0.0,
+      "on_target_rmse": 0.0,
+      "on_target_mse": 0.0,
+      "on_target_pred_mean": 0.0,
+      "on_target_pred_std": 0.0,
+      "on_target_target_mean": 0.0,
+      "on_target_target_std": 0.0,
+      "off_target_balanced_accuracy": 0.5,
+      "off_target_f1_score": 0.0,
+      "off_target_auroc": 0.09677419354838707,
+      "off_target_auprc": 0.016993017607771707,
+      "off_target_threshold_metrics": {
+        "threshold_0.3": {
+          "precision": 0.0,
+          "recall": 0.0,
+          "accuracy": 0.96875,
+          "f1": 0.0
+        },
+        "threshold_0.5": {
+          "precision": 0.0,
+          "recall": 0.0,
+          "accuracy": 0.96875,
+          "f1": 0.0
+        },
+        "threshold_0.7": {
+          "precision": 0.0,
+          "recall": 0.0,
+          "accuracy": 0.96875,
+          "f1": 0.0
+        }
+      },
+      "off_target_tn": 62,
+      "off_target_fp": 0,
+      "off_target_fn": 2,
+      "off_target_tp": 0,
+      "off_target_pred_mean": 0.018830064684152603,
+      "off_target_pred_std": 0.0017782242503017187,
+      "off_target_positive_ratio": 0.03125,
+      "off_target_negative_ratio": 0.96875
+    },
+    {
+      "total_loss": 0.2518452780929623,
+      "on_target_loss": 0.0,
+      "off_target_loss": 0.5036905561859246,
+      "batch_count": 8,
+      "on_target_spearman_r": 0.0,
+      "on_target_spearman_pval": 1.0,
+      "on_target_pearson_r": 0.0,
+      "on_target_pearson_pval": 1.0,
+      "on_target_mae": 0.0,
+      "on_target_rmse": 0.0,
+      "on_target_mse": 0.0,
+      "on_target_pred_mean": 0.0,
+      "on_target_pred_std": 0.0,
+      "on_target_target_mean": 0.0,
+      "on_target_target_std": 0.0,
+      "off_target_balanced_accuracy": 0.5,
+      "off_target_f1_score": 0.0,
+      "off_target_auroc": 0.5,
+      "off_target_auprc": 0.515625,
+      "off_target_threshold_metrics": {
+        "threshold_0.3": {
+          "precision": 0.0,
+          "recall": 0.0,
+          "accuracy": 0.96875,
+          "f1": 0.0
+        },
+        "threshold_0.5": {
+          "precision": 0.0,
+          "recall": 0.0,
+          "accuracy": 0.96875,
+          "f1": 0.0
+        },
+        "threshold_0.7": {
+          "precision": 0.0,
+          "recall": 0.0,
+          "accuracy": 0.96875,
+          "f1": 0.0
+        }
+      },
+      "off_target_tn": 62,
+      "off_target_fp": 0,
+      "off_target_fn": 2,
+      "off_target_tp": 0,
+      "off_target_pred_mean": 1.000000082740371e-07,
+      "off_target_pred_std": 7.105427357601002e-15,
+      "off_target_positive_ratio": 0.03125,
+      "off_target_negative_ratio": 0.96875
+    }
+  ]
+}

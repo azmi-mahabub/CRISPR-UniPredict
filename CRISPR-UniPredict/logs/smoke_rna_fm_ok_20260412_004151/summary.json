@@ -1,0 +1,31 @@
+{
+  "total_epochs": 2,
+  "best_val_loss": 0.1257545156404376,
+  "best_model_path": "models\\checkpoints\\best.pt",
+  "final_train_loss": 0.024050087196997083,
+  "final_val_loss": 0.2518452780929623,
+  "train_losses": [
+    0.2835052255541086,
+    0.024050087196997083
+  ],
+  "val_losses": [
+    0.1257545156404376,
+    0.2518452780929623
+  ],
+  "on_target_train_losses": [
+    0.0,
+    0.0
+  ],
+  "on_target_val_losses": [
+    0.0,
+    0.0
+  ],
+  "off_target_train_losses": [
+    0.5670104511082172,
+    0.048100174393994166
+  ],
+  "off_target_val_losses": [
+    0.2515090312808752,
+    0.5036905561859246
+  ]
+}

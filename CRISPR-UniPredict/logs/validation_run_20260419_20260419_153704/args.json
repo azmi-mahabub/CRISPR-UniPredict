@@ -1,0 +1,7 @@
+{
+  "config": "configs/smoke_rna_fm.yaml",
+  "resume": null,
+  "experiment_name": "validation_run_20260419",
+  "debug": true,
+  "seed": 42
+}
