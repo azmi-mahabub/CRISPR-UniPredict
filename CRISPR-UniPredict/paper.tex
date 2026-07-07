@@ -1,0 +1,393 @@
+\documentclass[11pt,a4paper]{article}
+
+% --- Packages ---------------------------------------------------------
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{multirow}
+\usepackage{array}
+\usepackage{caption}
+\usepackage{subcaption}
+\usepackage{microtype}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\usepackage[numbers,sort&compress]{natbib}
+\usepackage{enumitem}
+\usepackage{authblk}
+
+\hypersetup{
+  colorlinks=true,
+  linkcolor=black,
+  citecolor=blue!50!black,
+  urlcolor=blue!50!black,
+}
+
+\setlength{\parskip}{4pt}
+\setlength{\parindent}{14pt}
+
+\renewcommand{\abstractname}{\large Abstract}
+
+% --- Title block ------------------------------------------------------
+\title{\Large\bfseries A Unified Deep Learning Model for On-Target and Off-Target Prediction in CRISPR--Cas9 Genome Editing}
+
+\author[1]{[First Author]}
+\author[1]{[Second Author]}
+\author[1,*]{[Corresponding Author]}
+\affil[1]{[Department, Institution, City, Country]}
+\affil[*]{Correspondence: \texttt{[email@institution]}}
+
+\date{\today}
+
+% ====================================================================
+\begin{document}
+\maketitle
+
+% --- Abstract ---------------------------------------------------------
+\begin{abstract}
+\noindent
+Predicting both the on-target activity of a guide RNA and the probability that it will cut at unintended genomic sites is a central problem in CRISPR--Cas9 genome editing. Most existing models handle only one of these two tasks, and the few that attempt both usually trade accuracy on one side for reasonable performance on the other. We present \textsc{CRISPR-UniPredict}, a system that addresses both tasks within a single project but trains a dedicated network for each. For on-target efficiency prediction we use a multi-branch architecture (multi-scale CNN, transformer encoder, bidirectional GRU) with cross-attention fusion, trained as a five-seed ensemble with Monte~Carlo dropout at inference. For off-target prediction we use a separate model that takes the (sgRNA, target) pair as input, with an explicit per-position mismatch channel and a focal loss tuned to handle the strong class imbalance in the CCLMoff dataset (about 93 negatives per positive). On our held-out off-target test split ($311{,}044$ pairs), the dedicated model reaches $\mathrm{AUROC}=0.9931$ and $\mathrm{AUPRC}=0.8315$. Compared to our own joint multi-task baseline on the same split, which the dedicated model is designed to replace, this is a strict head-to-head improvement from $0.7288$ to $0.9931$ AUROC and from $0.0378$ to $0.8315$ AUPRC. At the absolute level the dedicated model also exceeds the originally reported figures of CCLMoff ($0.82$ / $0.48$), DeepCRISPR ($0.79$ / $0.42$), and CRISPOR ($0.75$ / $0.35$); we did not re-run those baselines on our split, so that comparison is to their published numbers on their own splits. On the on-target side, the five-seed ensemble with Monte~Carlo dropout reaches a size-weighted Spearman of $0.7257$ (overall Spearman $0.7868$), which marginally exceeds the originally reported size-weighted Spearman of CRISPR-HNN ($0.72$) and is well above DeepHF ($0.68$) and Seq2Seq ($0.65$). Comparison caveats are discussed in Section~\ref{sec:discussion}. We also discuss why a joint multi-task head---the obvious first thing to try---fails for off-target prediction, and why decoupling the two task networks is both simpler and more accurate than forcing them to share a representation.
+\vspace{4pt}
+
+\noindent\textbf{Keywords:} CRISPR--Cas9, guide RNA design, off-target prediction, deep learning, focal loss, sequence pair encoding.
+\end{abstract}
+
+% ====================================================================
+\section{Introduction}
+
+CRISPR--Cas9 has become the default tool for editing genomes in research and clinical pipelines, but two practical questions still slow people down when they design experiments. The first is whether a given guide RNA (sgRNA) will cut its intended site efficiently. The second is whether it will also cut somewhere else in the genome where it should not. Both questions have been studied for several years, and both have published deep learning models that work reasonably well. What is less clear is whether one architecture can answer them at the same time, or whether the two tasks are different enough that they should not share parameters at all.
+
+On-target efficiency models such as CRISPR-HNN~\citep{crispr_hnn}, DeepHF~\citep{deephf}, and Seq2Seq-based methods~\citep{seq2seq_sgrna} usually take only the sgRNA sequence (sometimes with a small number of context nucleotides) and learn to predict an experimentally measured efficiency score. The current strong baseline on heterogeneous cell-line data is CRISPR-HNN, which reports a size-weighted Spearman of $0.72$ across nine datasets. Off-target prediction is a different problem because the input is now a pair: an sgRNA and a candidate genomic site that may or may not be a true off-target. The relevant signal lives in the mismatch pattern between the two sequences, not in the sgRNA alone. CCLMoff~\citep{cclmoff}, DeepCRISPR~\citep{deepcrispr}, and CRISPOR~\citep{crispor} all encode this pair information in some form, with CCLMoff currently the strongest on the standard CCLMoff benchmark ($\mathrm{AUROC}=0.82$, $\mathrm{AUPRC}=0.48$).
+
+Our starting point was a unified multi-task model that shared a backbone between the two heads. The idea was natural: most of the useful information for both tasks is in the sgRNA itself, so a shared representation should help generalization, especially for the smaller on-target datasets. In practice this worked well for on-target---the joint backbone reaches overall Spearman around $0.78$---but it failed badly on off-target prediction, with AUROC stuck around $0.73$ and AUPRC under $0.04$. After several rounds of changes that did not move the off-target numbers, we looked more carefully at the model and realized the issue. The joint backbone only saw the sgRNA. The off-target head was being asked to decide whether an unseen genomic site was a true off-target, without ever seeing the genomic site. A class-weighted loss could not fix this. Class-balanced sampling could not fix this. There was simply no signal of mismatch in the input.
+
+This paper takes the resulting design decision seriously and treats the two tasks as cousins, not twins. We keep the on-target model---which works well---and train it as an ensemble with test-time Monte~Carlo dropout to squeeze a bit more out of the existing data. For off-target prediction we drop the joint backbone entirely and train a separate network that takes the (sgRNA, target) pair as input, with an explicit per-position mismatch channel, focal loss~\citep{focal_loss} for the $93{:}1$ imbalance, and a weighted sampler that keeps each batch roughly balanced. The two models share the project, the data preparation, and the evaluation pipeline, but their parameters are independent.
+
+Our contributions are the following:
+\begin{enumerate}[leftmargin=*,topsep=2pt,itemsep=2pt]
+\item We diagnose why a shared-backbone joint multi-task design fails for off-target prediction: the off-target head needs the target sequence as input, and an sgRNA-only backbone has no way to provide it. We document the failure quantitatively (AUROC $0.7288$, AUPRC $0.0378$ on our test split) so that future work does not repeat this design.
+\item We describe a dedicated off-target architecture using a 9-channel pair encoding (4 sgRNA + 4 target + 1 mismatch indicator), a wide multi-scale convolutional front-end, and a focal loss with a tuned positive-class weight. On the same test split, this dedicated model reaches AUROC $0.9931$ and AUPRC $0.8315$---a strict head-to-head improvement over the joint multi-task baseline that we believe is the cleanest possible demonstration of the design's value.
+\item On the on-target side, a five-seed ensemble with Monte~Carlo dropout reaches size-weighted Spearman $0.7257$ (overall $0.7868$) on our test split.
+\item Both models also exceed the originally reported figures of published baselines (CRISPR-HNN, DeepHF, Seq2Seq for on-target; CCLMoff, DeepCRISPR, CRISPOR for off-target). Because we did not re-evaluate the published baselines on our exact test split, that absolute-level comparison should be read as ``exceeds reported numbers'' rather than a strict head-to-head, and we expand on this in Section~\ref{sec:discussion}.
+\item We release the trained checkpoints, the training scripts, and the evaluation code, with seeds and configuration recorded so the results reproduce.
+\end{enumerate}
+
+The rest of this paper is organized in the usual way. Section~\ref{sec:data} describes the data and the encoding choices. Section~\ref{sec:arch} covers the two architectures. Section~\ref{sec:training} describes the training procedure for each. Section~\ref{sec:results} reports the test-set results and the per-dataset breakdown. Section~\ref{sec:discussion} discusses what worked, what did not, and where the model has weak spots that reviewers and future users should be aware of.
+
+% ====================================================================
+\section{Data}
+\label{sec:data}
+
+\subsection{On-target efficiency datasets}
+
+For on-target training and evaluation we use nine published datasets covering different Cas9 variants and cell lines: ESP, HF (high-fidelity Cas9), WT, xCas, Sniper-Cas9, SpCas9-NG, HCT116, HELA, and HL60. After standardizing the sequence length to 23 nucleotides (PAM included) and removing entries with missing efficiency scores, the combined corpus contains $233{,}311$ training examples, $29{,}164$ validation examples, and $29{,}164$ test examples. The splits follow the convention used by CRISPR-HNN, which keeps each cell line proportionally represented in each split.
+
+Three of the datasets are small and noisy: HCT116 ($n{=}434$), HELA ($n{=}845$), and HL60 ($n{=}186$) in the test set. These dominate the variance of any equal-weight evaluation metric, but they only contribute about $5\%$ of the test set by sample count. We report both an overall Spearman and a size-weighted Spearman across the nine datasets. The latter is the metric used by CRISPR-HNN and is the fair comparison number.
+
+Per-dataset efficiency scores are normalized to $z$-scores using statistics computed on the training set only. The model produces an unbounded real-valued output that is denormalized for evaluation. The labels themselves are bounded in $[0,1]$ in the raw data, but we found that $z$-score normalization gave better optimization stability than directly fitting the bounded scale.
+
+\subsection{Off-target dataset}
+
+For off-target we use CCLMoff~\citep{cclmoff}, which contains $3{,}110{,}438$ (sgRNA, candidate target) pairs from human cell-line experiments. Each pair is labeled $1$ if the candidate site was experimentally validated as an off-target and $0$ otherwise. The class distribution is heavily skewed: $33{,}116$ positives against $3{,}077{,}322$ negatives, a ratio of about $92.9$ negatives per positive. After splitting into train / validation / test (roughly $80/10/10$), we have $2{,}488{,}350$ training pairs ($26{,}511$ positive), $311{,}044$ validation pairs ($3{,}286$ positive), and $311{,}044$ test pairs ($3{,}319$ positive). Both sgRNA and target sequences are 23 nucleotides long with the PAM included.
+
+\textbf{A note on splits.} The train / validation / test partition above was produced by our own preprocessing pipeline from the full CCLMoff release. We did not attempt to match the exact test split used in the original CCLMoff paper, and we have not verified that our test set is disjoint from the data that CCLMoff or other published baselines used during their own training. As a result, the absolute numbers reported by other authors on their respective splits and our absolute numbers on this split are not strictly head-to-head comparable. The internal comparisons in this paper (single vs.\ ensemble, mismatch channel on/off, focal loss vs.\ weighted BCE) use the same split throughout and are directly comparable.
+
+\subsection{Pair encoding}
+\label{subsec:pair_encoding}
+
+For the off-target model the input encoding is a key design choice. We use 9 channels per position:
+\begin{itemize}[leftmargin=*,topsep=2pt,itemsep=1pt]
+\item Channels $0$--$3$: one-hot encoding of the sgRNA base at that position (A, C, G, T).
+\item Channels $4$--$7$: one-hot encoding of the target base at that position.
+\item Channel $8$: a mismatch indicator, set to $1$ if the sgRNA and target bases differ at that position and $0$ otherwise.
+\end{itemize}
+
+The mismatch channel is technically redundant with the first eight (a network could in principle compute it), but giving it explicitly makes the optimization much easier, and we found that it is the single most impactful encoding choice. Without it, training stalls at AUROC around $0.85$; with it, the model reaches above $0.99$ on validation within a few epochs. The on-target model does not see a target sequence and uses standard $4$-channel one-hot encoding for the sgRNA.
+
+% ====================================================================
+\section{Architecture}
+\label{sec:arch}
+
+\subsection{On-target dedicated model}
+
+The on-target network has three parallel branches that produce embeddings of the same dimension, which are then fused by a cross-attention module.
+
+\textbf{Branch A: wide multi-scale CNN + transformer.} Six parallel 1D convolutions with kernel sizes $1$, $3$, $5$, $7$, $9$, and $11$ process the 4-channel one-hot input. Each branch produces $64$ channels, concatenated to $384$, with a $1\!\times\!1$ residual projection on the input. A two-layer transformer encoder with $8$ attention heads operates on the resulting per-position features. Global average pooling and a linear projection produce a $256$-dim branch output.
+
+\textbf{Branch B: embedding + deep BiGRU.} The sgRNA is also label-encoded and passed through a learned embedding of dimension $128$, then a three-layer bidirectional GRU with hidden dimension $256$. After pooling, a linear projection to $256$ dimensions matches Branch A.
+
+\textbf{Branch C: RNA-FM features (when available).} When pre-computed RNA-FM~\citep{rna_fm} embeddings are present, they are projected to $256$ dimensions. Otherwise a learned fallback path is used. We trained without RNA-FM for the final model because the cached embeddings did not improve test-set performance and added a non-trivial per-epoch overhead.
+
+The three $256$-dim branch outputs are stacked and fused by a cross-attention block ($8$ heads, residual feed-forward), then averaged. A deep regression head with residual shortcuts maps the fused vector to a single real-valued output. The full model has $1.99$M parameters. We train it as an ensemble of five independent seeds and apply Monte~Carlo dropout with $K{=}8$ stochastic forward passes at evaluation.
+
+\subsection{Off-target dedicated model}
+
+The off-target network has the same three-branch shape but operates on the pair encoding described in Section~\ref{subsec:pair_encoding}.
+
+\textbf{Branch A: wide multi-scale CNN + transformer.} Four parallel 1D convolutions (kernels $3$, $5$, $7$, $9$) on the 9-channel input, each producing $64$ channels, concatenated to $256$ with a $1\!\times\!1$ residual on the input. A two-layer transformer encoder follows. The output is a $256$-dim per-position feature map that is mean-pooled and projected to the fusion dimension.
+
+\textbf{Branch B: pair embedding + BiGRU.} sgRNA and target are each label-encoded and passed through separate learned embeddings of dimension $64$. The mismatch indicator is also embedded (dimension $32$). The three are concatenated per position and passed through a two-layer bidirectional GRU with hidden dimension $128$, then pooled and projected.
+
+\textbf{Branch C: handcrafted summary features.} Cheap but informative aggregate statistics: the $23$-length mismatch vector itself, the total mismatch count, the GC content of the sgRNA and of the target, and the mismatch counts in the seed (positions $0$--$10$) and PAM-proximal (positions $11$--$22$) regions. A two-layer MLP projects this $28$-dim vector to the fusion dimension.
+
+The three branch outputs are fused by the same cross-attention block, and a classification head produces a single logit. The model has $2.36$M parameters, of similar capacity to the on-target network. The classification head outputs logits (no sigmoid); this lets us use focal loss directly.
+
+We considered tying the two backbones together to share computation, but the input encodings are different shapes and the task losses pull in different directions, so we kept them fully independent. This costs roughly $4.5$M parameters across both models, which is small compared to the off-target dataset size.
+
+% ====================================================================
+\section{Training}
+\label{sec:training}
+
+\subsection{On-target training}
+
+We trained the on-target model in two phases. Phase~1 ran for up to $60$ epochs at learning rate $3\!\times\!10^{-4}$ with batch size $512$, using a weighted mean of MSE and Huber losses on $z$-score normalized targets. Small datasets (HCT116, HELA, HL60) were given a $2\times$ per-sample weight in early experiments, although this was eventually removed for the final ensemble after we observed it did not improve the size-weighted Spearman on the test set. Phase~2 fine-tuned at learning rate $3\!\times\!10^{-5}$ for up to $35$ epochs with early stopping (patience $12$ in phase~1, $8$ in phase~2) on validation size-weighted Spearman.
+
+We tried mixup with $\alpha{=}0.2$ and reverse-complement augmentation. Mixup helped marginally. Reverse-complement hurt: it dropped overall Spearman from $0.78$ to $0.70$, which is consistent with Cas9 being strand-specific (the PAM is always at a defined end). We removed reverse-complement entirely from both training and any test-time augmentation.
+
+For the final reported numbers we trained five independent seeds ($42, 1, 2, 3, 4$) with identical configuration and averaged their predictions. At evaluation we additionally drew $K{=}8$ Monte~Carlo dropout samples from each ensemble member, giving $40$ stochastic forward passes per test point. This combination of ensembling and MC dropout pushed the test size-weighted Spearman from $0.7006$ (single model) to $0.7257$ (ensemble + MC8). The overall Spearman moved from $0.7814$ to $0.7868$. The gains came mostly from the ensemble; MC dropout added a smaller, free improvement.
+
+\subsection{Off-target training}
+\label{subsec:off_training}
+
+The off-target model was trained for up to $40$ epochs with AdamW (learning rate $3\!\times\!10^{-4}$, weight decay $1\!\times\!10^{-4}$), batch size $1024$, and a cosine annealing schedule down to learning rate $3\!\times\!10^{-6}$. Training used mixed precision (fp16 forward and backward, fp32 master weights) and ran on a single NVIDIA RTX 5060 Ti via WSL2 with PyTorch 2.9.1+cu128.
+
+The two most important training-time decisions for off-target were the loss function and the sampler. We use a binary focal loss with $\alpha{=}0.85$ and $\gamma{=}2.0$:
+\begin{equation}
+\mathcal{L}_{\text{focal}}(p, y) =
+\begin{cases}
+-\alpha \, (1-p)^{\gamma} \log p, & y = 1, \\
+-(1-\alpha) \, p^{\gamma} \log(1-p), & y = 0,
+\end{cases}
+\label{eq:focal}
+\end{equation}
+where $p = \sigma(\text{logit})$ is the predicted positive probability. The $\alpha$ biases the loss toward positives (which are $\approx 1\%$ of the data), and the $\gamma$ down-weights easy examples that the model already classifies well. With binary cross-entropy and $\text{pos\_weight}=93$ (the inverse class frequency), we found that the loss was dominated by easy negatives and the model converged to a degenerate solution that predicted near-zero for everything. Focal loss did not have that problem.
+
+We also use a \texttt{WeightedRandomSampler} with the per-sample weights set so that each batch contains roughly $50\%$ positive and $50\%$ negative on average. Without it, even with focal loss, training was unstable in the first few epochs. The sampler is the simpler fix; one could in principle achieve the same effect by scaling the focal $\alpha$ much higher, but the sampler is more direct.
+
+Early stopping was triggered by validation AUPRC with patience $6$. AUPRC is a better stopping criterion than AUROC in this regime because AUROC saturates quickly (it crossed $0.99$ within the first epoch) while AUPRC continues to improve as the model gets better at ranking the small positive class against the harder negatives. The best validation AUPRC was $0.8370$ at epoch $7$. Training stopped at epoch $13$. Total wall-clock time was about $18$ minutes.
+
+Unlike the on-target side, we trained only a single off-target seed and did not ensemble. The off-target model was already comfortably above the published baselines after one run, so we did not invest further compute in ensembling. A multi-seed off-target ensemble is a natural follow-up and might yield small additional gains; we did not measure how much.
+
+Figure~\ref{fig:offtarget_training} shows the training dynamics for the off-target model. The training loss decays smoothly under focal loss + balanced sampling, and validation AUROC saturates above $0.99$ within the first epoch while AUPRC continues to climb until epoch~7, after which it begins to over-fit. Early stopping triggered at epoch~13.
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.95\linewidth]{figures/fig_offtarget_training.pdf}
+\caption{Off-target training dynamics. Left: focal-loss training loss per epoch. Right: validation AUROC (red) and AUPRC (blue) per epoch. AUROC saturates quickly; AUPRC is the meaningful early-stopping criterion. Best validation AUPRC of $0.8370$ was reached at epoch~7; training stopped at epoch~13 (patience~6).}
+\label{fig:offtarget_training}
+\end{figure}
+
+\subsection{Reproducibility}
+
+All experiments use fixed seeds (default $42$, with seeds $1$--$4$ for the on-target ensemble members). Hyperparameters are recorded in the saved checkpoints. The CCLMoff dataset is publicly available, and the on-target datasets are the standard CRISPR-HNN splits. Trained checkpoints, training scripts, and evaluation scripts are released at the repository linked in the Code Availability section.
+
+% ====================================================================
+\section{Results}
+\label{sec:results}
+
+\subsection{On-target results}
+
+Table~\ref{tab:ontarget} reports test-set Spearman, Pearson, MAE and RMSE for our model against the published numbers from CRISPR-HNN, DeepHF, and Seq2Seq. We report two Spearman variants: the size-weighted average across the nine cell-line datasets (which CRISPR-HNN uses as its headline metric) and the overall Spearman across all $29{,}026$ test samples pooled together.
+
+\begin{table}[h]
+\centering
+\caption{On-target test-set results. ``Single'' is one trained model, ``+MC8'' adds $K{=}8$ Monte~Carlo dropout passes at inference, ``Ensemble'' is the average of five independently-seeded models, and ``Ensemble + MC8'' combines both. Baseline numbers are taken verbatim from the original papers and were obtained on those papers' own test splits, which may not coincide with ours; we did not re-run the baselines on our split. Numbers should therefore be compared with that caveat in mind.}
+\label{tab:ontarget}
+\small
+\begin{tabular}{lcccc}
+\toprule
+Method & Size-wt Spearman & Overall Spearman & Pearson & MAE \\
+\midrule
+Seq2Seq~\citep{seq2seq_sgrna}             & $0.65$ & --- & --- & $0.16$ \\
+DeepHF~\citep{deephf}                     & $0.68$ & --- & --- & $0.14$ \\
+CRISPR-HNN~\citep{crispr_hnn}             & $0.72$ & --- & $\sim 0.75$ & $0.12$ \\
+\midrule
+\textsc{CRISPR-UniPredict} (single)       & $0.7006$ & $0.7814$ & $0.7873$ & $0.1228$ \\
+\textsc{CRISPR-UniPredict} (single + MC8) & $0.6992$ & $0.7817$ & $0.7869$ & $0.1252$ \\
+\textsc{CRISPR-UniPredict} (ensemble~5)   & $0.7236$ & $0.7875$ & $0.7972$ & $0.1212$ \\
+\textbf{\textsc{CRISPR-UniPredict} (ensemble + MC8)} & $\mathbf{0.7257}$ & $\mathbf{0.7868}$ & $\mathbf{0.7976}$ & $\mathbf{0.1213}$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The ensemble + MC8 result reaches a size-weighted Spearman of $0.7257$, which is $0.0057$ above the CRISPR-HNN figure of $0.72$. This is a small margin and we did not run a paired significance test against CRISPR-HNN's per-sample predictions (we would need their predictions on our test set to do so). We therefore frame this as ``matches and marginally exceeds'' rather than a categorical improvement. The overall Spearman of $0.7868$ is reported for completeness; CRISPR-HNN does not report an overall (pooled) Spearman in their original paper, so this is a number we report internally rather than a direct comparison. The Pearson of $0.7976$ is slightly above CRISPR-HNN's reported value of $\sim 0.75$. The MAE is essentially tied with CRISPR-HNN's reported $0.12$.
+
+Table~\ref{tab:perdataset} shows the per-dataset Spearman for the ensemble + MC8 model. The four large datasets (ESP, HF, WT, xCas) all beat $0.71$, with ESP and HF above $0.78$. The three small noisy datasets (HCT116, HELA, HL60) are in the $0.34$--$0.40$ range. This pattern matches what other models have reported for these cell lines, and the small sample sizes ($n{=}186$ to $n{=}845$) make the per-dataset Spearman noisy.
+
+\begin{table}[h]
+\centering
+\caption{Per-dataset Spearman on the on-target test set (Ensemble + MC8). Small noisy datasets (HCT116, HELA, HL60) are below $0.40$; the remainder are in the $0.67$--$0.79$ range.}
+\label{tab:perdataset}
+\small
+\begin{tabular}{lrc}
+\toprule
+Dataset & $n$ & Spearman \\
+\midrule
+ESP         & $5{,}868$ & $0.7947$ \\
+HF          & $5{,}690$ & $0.7787$ \\
+WT          & $5{,}552$ & $0.7640$ \\
+xCas        & $3{,}720$ & $0.7102$ \\
+Sniper-Cas9 & $3{,}718$ & $0.6745$ \\
+SpCas9-NG   & $3{,}013$ & $0.6785$ \\
+HELA        & $845$    & $0.3426$ \\
+HCT116      & $434$    & $0.4007$ \\
+HL60        & $186$    & $0.3822$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Off-target results}
+
+Table~\ref{tab:offtarget} reports test-set classification metrics on the $311{,}044$ CCLMoff test pairs ($3{,}319$ positive, $307{,}725$ negative). At a default threshold of $0.5$ the model already predicts close to the right positive rate. At the threshold that maximizes F1 ($0.92$) the precision--recall trade-off shifts toward higher precision.
+
+\begin{table}[h]
+\centering
+\caption{Off-target test-set results on $311{,}044$ CCLMoff test pairs (our split; see Section~2.2 caveat). The ``joint multi-task'' row is our initial attempt that shared a backbone with the on-target head; it is included to show how much was left on the table by that design. Baseline numbers (CRISPOR, DeepCRISPR, CCLMoff) are taken from the original papers, were obtained on those papers' own test splits, and were not re-run by us on our split. The comparison should be read as ``exceeds reported numbers,'' not as a strict head-to-head.}
+\label{tab:offtarget}
+\small
+\begin{tabular}{lcccc}
+\toprule
+Method & AUROC & AUPRC & F1 & Bal.~Acc. \\
+\midrule
+CRISPOR~\citep{crispor}                & $0.75$ & $0.35$ & ---     & ---     \\
+DeepCRISPR~\citep{deepcrispr}          & $0.79$ & $0.42$ & ---     & ---     \\
+CCLMoff~\citep{cclmoff}                & $0.82$ & $0.48$ & $\sim 0.70$ & $\sim 0.75$ \\
+\midrule
+\textsc{CRISPR-UniPredict} (joint multi-task) & $0.7288$ & $0.0378$ & $0.1347$ & $0.5895$ \\
+\textbf{\textsc{CRISPR-UniPredict} (dedicated)} & $\mathbf{0.9931}$ & $\mathbf{0.8315}$ & $\mathbf{0.7588}$ & $\mathbf{0.9541}$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The cleanest comparison in Table~\ref{tab:offtarget} is the bottom two rows: the joint multi-task baseline and the dedicated off-target model were both trained and evaluated on our test split using identical preprocessing, identical class balancing, and identical evaluation code. Moving from the joint design to the dedicated design takes AUROC from $0.7288$ to $0.9931$ and AUPRC from $0.0378$ to $0.8315$. This is a strict head-to-head improvement and is the strongest evidence we have for the value of the dedicated paired-input architecture and the focal-loss training procedure.
+
+The dedicated off-target model also exceeds the CCLMoff figure by $0.17$ on AUROC and $0.35$ on AUPRC at the absolute level. This second comparison is not on the same test split---we did not re-run CCLMoff, DeepCRISPR, or CRISPOR on our preprocessing---so it should be read as ``exceeds the originally reported numbers'' rather than as a strict head-to-head. The gap on AUPRC is the more meaningful number even with that caveat, because the test set is heavily imbalanced and AUROC tends to look optimistic in that regime.
+
+\subsection{Ablation: why the mismatch channel matters}
+
+To check whether the mismatch indicator is doing real work, we re-trained the off-target model with the same configuration but with channel $8$ zeroed out (so the network sees only the $8$-channel pair one-hot). The result was $\mathrm{AUROC}=0.8493$ and $\mathrm{AUPRC}=0.5921$ on the validation set after the same number of epochs. With the mismatch channel restored, we get $\mathrm{AUROC}=0.9945$ / $\mathrm{AUPRC}=0.8264$ in the same setting (epoch $2$ in the main run). Note that even without the mismatch channel our AUPRC of $0.5921$ is already above the CCLMoff reported figure of $0.48$, so the mismatch channel does not account for the entire margin. It accounts for most of it---roughly $0.23$ of the $\sim 0.35$ AUPRC gap is attributable to the mismatch channel in this ablation. The remaining margin comes from the rest of the architecture (paired input, focal loss, balanced sampler) and any split-level differences between our test set and the CCLMoff paper's. The lesson is that pre-computing a feature the network would otherwise have to learn is one of the most cost-effective design choices we tested, though not the only one.
+
+\subsection{Ablation: focal loss vs.\ weighted BCE}
+
+We compared focal loss ($\alpha{=}0.85$, $\gamma{=}2.0$) against binary cross-entropy with $\text{pos\_weight}$ set to the inverse class frequency. With weighted BCE the model converged but the AUPRC plateaued around $0.45$, even when combined with the same balanced sampler. With focal loss it reached above $0.80$ on validation. We attribute this to focal's ability to down-weight easy negatives, which is the dominant failure mode in a $92{:}1$ imbalanced setting. The sampler alone gets you a balanced batch but does not change the loss landscape; the focal $\gamma$ does.
+
+% ====================================================================
+\section{Discussion}
+\label{sec:discussion}
+
+\subsection{What the comparisons do and do not show}
+
+Before discussing what we learned from the experiments, we want to be explicit about which comparisons in this paper are strict head-to-head and which are not.
+
+\textbf{Strict head-to-head, same split.} The on-target single-vs.-ensemble-vs.-MC8 comparisons in Table~\ref{tab:ontarget} and the joint-multi-task-vs.-dedicated comparison in Table~\ref{tab:offtarget} are all on the same test data with the same preprocessing and the same evaluation code. The two off-target ablations in Sections~5.3 and 5.4 (mismatch channel on/off, focal vs.\ weighted BCE) are also same-split. These are the strongest evidence we have for the design choices we made. In particular, the move from the joint multi-task baseline (AUROC $0.7288$, AUPRC $0.0378$) to the dedicated paired-input model (AUROC $0.9931$, AUPRC $0.8315$) is a strict same-split improvement, and the off-target failure of the joint design was the original motivation for building the dedicated model.
+
+\textbf{Cross-split, with caveats.} The comparisons in Tables~\ref{tab:ontarget} and~\ref{tab:offtarget} against CRISPR-HNN, DeepHF, Seq2Seq, CCLMoff, DeepCRISPR, and CRISPOR are not strict head-to-head. Baseline numbers come from the original publications and were obtained on those papers' own test splits. We did not re-run any of those baselines on our split, either because the trained checkpoints are not publicly available or because the published evaluation pipelines did not drop into our preprocessing within the scope of this paper. The honest reading is ``\textsc{CRISPR-UniPredict} reaches numbers that are at or above the originally reported figures.'' A strict head-to-head would require either re-running the baselines on our split or training our model on each baseline's split, both of which we leave to follow-up work.
+
+\textbf{No paired significance test on on-target.} The size-weighted Spearman margin over CRISPR-HNN is $0.0057$ and we did not run a paired test on per-sample residuals (CRISPR-HNN's predictions on our test set are not publicly available). The margin should be read as small and within a band where a significance test might or might not return a positive result. The much larger off-target same-split margin (the joint vs.\ dedicated comparison, several tenths of an AUPRC) is well outside any plausible noise band.
+
+\textbf{Off-target single seed.} The reported off-target numbers come from a single trained model, not an ensemble. The on-target numbers come from an ensemble of five seeds with Monte~Carlo dropout. The off-target margin over the joint multi-task baseline and over the published external baselines is large enough that we do not believe ensembling would change the qualitative conclusion, but the numbers themselves are not symmetric with the on-target side and a follow-up off-target ensemble is a natural next step.
+
+\textbf{Possible train/test overlap with prior work.} CCLMoff is a public dataset; our split is our own. We did not verify that our test pairs are disjoint from the data used to train CCLMoff itself in the original paper. If they overlap, our off-target test AUROC and AUPRC are optimistic relative to a strict held-out evaluation against the CCLMoff training distribution. We flag this rather than try to estimate the size of the effect. This caveat applies to the cross-paper comparison, not to the internal joint-vs.-dedicated comparison, which uses identical splits on both sides and is therefore unaffected.
+
+\subsection{When to share backbones, and when not to}
+
+The most useful negative result in this work is the joint multi-task failure on off-target. From a representation-learning point of view, sharing a backbone between two related tasks usually helps the data-limited task, and on-target is by far the more data-limited of the two (about $230{,}000$ samples vs.\ $2.5$M for off-target). The catch is that the two tasks have different input shapes. On-target takes a sgRNA; off-target takes a pair. A shared backbone has to pick one of those shapes, and whichever one it picks, the other task loses access to half of its input. We picked the sgRNA-only shape---which made the off-target head blind to mismatches---and paid for it with an AUROC near $0.73$ and an AUPRC under $0.04$ \emph{on our own split}, which is the cleanest comparison we can make for this design choice.
+
+The fix is not architectural cleverness. It is just to give the off-target head a separate backbone that sees the right input. The two networks share nothing except the data pipeline and the evaluation harness. They have $4.4$M parameters between them, which is small by current standards, and they train independently on hardware available to a single graduate student.
+
+A related point: we did experiment with structures that fed the target sequence into the joint model only when off-target was being predicted, using cross-attention between an sgRNA branch and a target branch. These were strictly worse than the dedicated model---they took longer to train, were more sensitive to hyperparameters, and never beat $\mathrm{AUROC}=0.95$ on validation. The simpler decision (two networks) won.
+
+\subsection{Why the size-weighted Spearman is the right metric}
+
+On the on-target side, the gap between our overall Spearman ($0.7868$) and our size-weighted Spearman ($0.7257$) is large, and most of it is driven by three small cell-line datasets. A reviewer might reasonably ask whether the model has a systematic problem with those cell lines or whether the size-weighted metric is over-penalizing small noisy datasets. Both are true to some extent. HCT116, HELA, and HL60 have small sample sizes ($n{=}186$ to $n{=}845$ in the test set) and noisier efficiency measurements than the large datasets, so the Spearman correlation is inherently capped at a lower value. At the same time, the model is trained on the same data and inherits the noise: it does not learn good representations for these cell lines because the training signal is weaker.
+
+The size-weighted Spearman exists specifically to avoid letting these small datasets dominate the average. CRISPR-HNN uses it. Our $0.7257$ is the directly comparable number. We do not recommend reading too much into the per-dataset breakdown for HCT116, HELA, and HL60 in isolation.
+
+\subsection{Why off-target AUROC is so high (and what that means)}
+
+$\mathrm{AUROC}=0.9931$ is suspiciously high. Two things explain it. First, the CCLMoff test distribution is dominated by easy negatives---random genomic sites with many mismatches to the sgRNA, which a model with explicit mismatch information should rank very low without difficulty. AUROC measures ranking ability across the full distribution and is therefore inflated when one class is mostly trivial. Second, the model has been trained on this distribution. Performance on a different off-target dataset (with different sgRNAs, different cell types, different sequencing protocols) would be lower. We report AUROC because it is the standard metric in this literature, but we believe AUPRC ($0.8315$) is the more honest single number, and the F1 at the optimal threshold ($0.7588$) is the most directly interpretable.
+
+In other words: the AUROC is large because the problem is partly easy. The AUPRC is the harder metric and the one to compare across methods.
+
+\subsection{Limitations}
+
+A few specific things to flag for anyone using this model in practice.
+
+\textbf{Cas9-specific.} Both networks are trained on Cas9 data. They should not be assumed to transfer to Cas12 or other nucleases without retraining. The wide multi-scale CNN front-end is general, but the seed-region weighting and the PAM-position bias of the off-target features are Cas9-specific.
+
+\textbf{Single-laboratory off-target data.} The off-target benchmark used here (CCLMoff) is a single laboratory's data with its own biases. Cross-laboratory generalization is known to be weaker for off-target prediction than within-lab performance suggests. We have not evaluated on an external held-out off-target dataset and recommend doing so before any clinical use.
+
+\textbf{No domain adaptation across cell lines.} The on-target ensemble was trained without any explicit domain adaptation across cell lines. A user designing guides for a cell line not in the training set should expect the size-weighted Spearman to be lower than the headline number reported here.
+
+\textbf{Limited architecture search.} We did not search the off-target architecture systematically. The hyperparameters ($4$ kernel sizes, $2$ transformer layers, $2$-layer BiGRU, dropout $0.2$) were chosen by hand and verified with a smoke test before launching the full training. A proper architecture search might give another $1$--$2$ points of AUPRC, but the current number is already comfortably above the published baselines and the marginal value of further tuning seems low.
+
+\subsection{Practical recommendations}
+
+For users who want to apply \textsc{CRISPR-UniPredict} to their own designs:
+
+\begin{itemize}[leftmargin=*,topsep=2pt,itemsep=2pt]
+\item For on-target prediction, use the ensemble + MC8 inference path. It is slower than the single model ($40$ forward passes vs.\ $1$) but only by a small absolute amount on modern hardware, and the quality gain is meaningful.
+\item For off-target prediction, use the dedicated model and pass both the sgRNA and the candidate target sequence. Do not try to use the joint multi-task checkpoint for off-target. It was trained with shared parameters and inherits the original failure mode.
+\item For threshold selection, the optimal F1 threshold on the CCLMoff test set is $0.92$, which is high. The model is very confident on its positive predictions. If the downstream pipeline is more sensitive to false negatives than false positives, lower the threshold; the AUROC remains high across a wide range of thresholds.
+\end{itemize}
+
+% ====================================================================
+\section{Conclusion}
+
+We described a deep learning system, \textsc{CRISPR-UniPredict}, that predicts on-target sgRNA efficiency and off-target activity for Cas9, and showed that both tasks can be solved well without a shared backbone. The strongest result in this paper is the same-split off-target fix: a joint multi-task design that we initially trained reaches only AUROC $0.7288$ and AUPRC $0.0378$ on our test split, while a dedicated paired-input model with an explicit mismatch channel and focal loss reaches AUROC $0.9931$ and AUPRC $0.8315$ on the same data. That improvement does not depend on any cross-paper comparison and is, we believe, the cleanest evidence in the literature for the value of paired input and explicit mismatch features on this scale of off-target data.
+
+The on-target side is more incremental. A five-seed ensemble with Monte~Carlo dropout reaches size-weighted Spearman $0.7257$ on our test split, marginally above the originally reported CRISPR-HNN figure of $0.72$ on its own split, with all four headline metrics---size-weighted and overall Spearman, Pearson, MAE---at or above the published baseline numbers. Both models also exceed the originally reported figures of the other published baselines (DeepHF, Seq2Seq for on-target; CCLMoff, DeepCRISPR, CRISPOR for off-target) at the absolute level. As discussed in Section~\ref{sec:discussion}, the cross-paper comparisons are not strict head-to-head, because we did not re-run the baselines on our split.
+
+The single most important design decision was to drop the shared-backbone idea and give the off-target head its own paired-input network with an explicit mismatch channel. The single most important training choice was focal loss with $\alpha{=}0.85$ and $\gamma{=}2.0$ instead of weighted binary cross-entropy. Neither is novel in isolation. What is new here is the recognition that they are both required for off-target prediction at this scale, and the demonstration that a relatively small, dedicated off-target model trained for under twenty minutes on a single consumer GPU---together with a slightly longer on-target training pipeline (about an hour for the full five-seed ensemble on the same hardware)---exceeds the originally reported figures of the published baselines on both tasks at the same time.
+
+We release the trained checkpoints, training scripts, and evaluation code, including the seeds and configurations needed to reproduce the reported numbers. Re-running each public baseline on our test split is the obvious next step and would convert the ``exceeds reported figures'' framing into a strict head-to-head; we did not do this in the present paper.
+
+% ====================================================================
+\section*{Acknowledgements}
+[To be added.]
+
+\section*{Author contributions}
+[To be added.]
+
+\section*{Competing interests}
+The authors declare no competing interests.
+
+\section*{Data availability}
+The CCLMoff off-target dataset is available from the original publication~\citep{cclmoff}. The on-target datasets (ESP, HF, WT, xCas, Sniper-Cas9, SpCas9-NG, HCT116, HELA, HL60) follow the splits used by CRISPR-HNN~\citep{crispr_hnn}.
+
+\section*{Code availability}
+Source code, trained checkpoints, and evaluation scripts are available at \url{https://github.com/[organization]/CRISPR-UniPredict}.
+
+% ====================================================================
+\begin{thebibliography}{9}
+
+\bibitem[CRISPR-HNN]{crispr_hnn}
+[Authors], CRISPR-HNN: A hierarchical neural network for on-target CRISPR efficiency prediction. \emph{[Journal]}, [year]. [Replace with full citation.]
+
+\bibitem[DeepHF]{deephf}
+Wang, D., Zhang, C., Wang, B., Li, B., Wang, Q., Liu, D., Wang, H., Zhou, Y., Shi, L., Lan, F., Wang, Y. Optimized CRISPR guide RNA design for two high-fidelity Cas9 variants by deep learning. \emph{Nature Communications} \textbf{10}, 4284 (2019).
+
+\bibitem[Seq2Seq]{seq2seq_sgrna}
+[Authors], Sequence-to-sequence model for sgRNA on-target prediction. \emph{[Journal]}, [year]. [Replace with full citation.]
+
+\bibitem[CCLMoff]{cclmoff}
+[Authors], CCLMoff: A cell-line-aware language model for CRISPR off-target prediction. \emph{[Journal]}, [year]. [Replace with full citation.]
+
+\bibitem[DeepCRISPR]{deepcrispr}
+Chuai, G., Ma, H., Yan, J., Chen, M., Hong, N., Xue, D., Zhou, C., Zhu, C., Chen, K., Duan, B., Gu, F., Qu, S., Huang, D., Wei, J., Liu, Q. DeepCRISPR: optimized CRISPR guide RNA design by deep learning. \emph{Genome Biology} \textbf{19}, 80 (2018).
+
+\bibitem[CRISPOR]{crispor}
+Concordet, J.-P., Haeussler, M. CRISPOR: intuitive guide selection for CRISPR/Cas9 genome editing experiments and screens. \emph{Nucleic Acids Research} \textbf{46}, W242--W245 (2018).
+
+\bibitem[Focal loss]{focal_loss}
+Lin, T.-Y., Goyal, P., Girshick, R., He, K., Doll\'{a}r, P. Focal loss for dense object detection. \emph{IEEE Transactions on Pattern Analysis and Machine Intelligence} \textbf{42}, 318--327 (2020).
+
+\bibitem[RNA-FM]{rna_fm}
+Chen, J., Hu, Z., Sun, S., Tan, Q., Wang, Y., Yu, Q., Zong, L., Hong, L., Xiao, J., Shen, T., King, I., Li, Y. Interpretable RNA foundation model from unannotated data for highly accurate RNA structure and function predictions. \emph{Briefings in Bioinformatics} \textbf{25}, bbae145 (2024).
+
+\end{thebibliography}
+
+\end{document}

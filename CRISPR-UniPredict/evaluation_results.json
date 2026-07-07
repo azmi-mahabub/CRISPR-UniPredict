@@ -1,0 +1,72 @@
+{
+  "metrics": {
+    "on_target": {
+      "mae": 0.1902170330286026,
+      "rmse": 0.23155838984601107,
+      "spearman": 0.5084681717988296,
+      "pearson": 0.5403447151184082
+    },
+    "off_target": {
+      "auroc": 0.7288386635737307,
+      "auprc": 0.0378278822003163,
+      "f1": 0.134742951907131,
+      "balanced_accuracy": 0.589492468353481
+    }
+  },
+  "comparison": {
+    "on_target": {
+      "CRISPR-HNN": {
+        "spearman_diff": -0.21153182820117034,
+        "mae_diff": -0.0702170330286026,
+        "our_spearman": 0.5084681717988296,
+        "baseline_spearman": 0.72,
+        "our_mae": 0.1902170330286026,
+        "baseline_mae": 0.12
+      },
+      "DeepHF": {
+        "spearman_diff": -0.1715318282011704,
+        "mae_diff": -0.05021703302860259,
+        "our_spearman": 0.5084681717988296,
+        "baseline_spearman": 0.68,
+        "our_mae": 0.1902170330286026,
+        "baseline_mae": 0.14
+      },
+      "Seq2Seq": {
+        "spearman_diff": -0.14153182820117038,
+        "mae_diff": -0.030217033028602597,
+        "our_spearman": 0.5084681717988296,
+        "baseline_spearman": 0.65,
+        "our_mae": 0.1902170330286026,
+        "baseline_mae": 0.16
+      }
+    },
+    "off_target": {
+      "CCLMoff": {
+        "auroc_diff": -0.09116133642626922,
+        "auprc_diff": -0.4421721177996837,
+        "our_auroc": 0.7288386635737307,
+        "baseline_auroc": 0.82,
+        "our_auprc": 0.0378278822003163,
+        "baseline_auprc": 0.48
+      },
+      "DeepCRISPR": {
+        "auroc_diff": -0.06116133642626931,
+        "auprc_diff": -0.3821721177996837,
+        "our_auroc": 0.7288386635737307,
+        "baseline_auroc": 0.79,
+        "our_auprc": 0.0378278822003163,
+        "baseline_auprc": 0.42
+      },
+      "CRISPOR": {
+        "auroc_diff": -0.021161336426269273,
+        "auprc_diff": -0.3121721177996837,
+        "our_auroc": 0.7288386635737307,
+        "baseline_auroc": 0.75,
+        "our_auprc": 0.0378278822003163,
+        "baseline_auprc": 0.35
+      }
+    }
+  },
+  "on_target_better_than": 0,
+  "off_target_better_than": 0
+}

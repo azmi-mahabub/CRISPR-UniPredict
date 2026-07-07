@@ -1,0 +1,84 @@
+# CRISPR-UniPredict Requirements
+# Python 3.9+
+# Install with: pip install -r requirements.txt
+
+# ============================================================================
+# CORE SCIENTIFIC COMPUTING
+# ============================================================================
+numpy==1.23.5
+pandas==1.5.2
+scipy==1.9.3
+scikit-learn==1.1.3
+
+# ============================================================================
+# PYTORCH & DEEP LEARNING (CUDA 11.8)
+# ============================================================================
+# Note: PyTorch requires special installation for CUDA support
+# For GPU support, install with:
+# pip install torch==2.0.0 torchvision==0.15.2 torchaudio==2.0.1 --index-url https://download.pytorch.org/whl/cu118
+torch==2.0.0
+torchvision==0.15.2
+torchaudio==2.0.1
+
+# Deep Learning utilities
+transformers==4.30.0
+
+# Data processing
+biopython==1.81
+
+# Visualization
+matplotlib==3.6.2
+seaborn==0.12.1
+plotly==5.14.0
+
+# Utilities
+tqdm==4.64.1
+pyyaml==6.0
+python-dotenv==1.0.0
+
+# Jupyter
+jupyter==1.0.0
+jupyterlab==3.6.3
+ipython==8.12.0
+
+# Development
+pytest==7.3.1
+black==23.3.0
+flake8==6.0.0
+isort==5.12.0
+
+# Documentation
+sphinx==6.3.0
+sphinx-rtd-theme==1.2.0
+
+# ============================================================================
+# OPTIONAL DEPENDENCIES (RNA-FM and Advanced Features)
+# ============================================================================
+# Model complexity analysis
+ptflops==0.6.6
+
+# Deep learning frameworks
+pytorch-ignite==0.4.10
+
+# Configuration management
+hydra-core==1.1.1
+omegaconf==2.1.1
+
+# Additional utilities
+regex==2021.11.10
+tabulate==0.8.9
+tensorboard==2.10.0
+tensorboard-data-server==0.6.1
+tensorboard-plugin-wit==1.8.1
+
+# Data processing
+bitarray==2.5.1
+
+# Google Cloud and authentication
+google-auth==2.10.0
+google-auth-oauthlib==0.4.6
+google-auth-httplib2==0.1.0
+cachetools==5.2.0
+rsa==4.8
+pyasn1==0.4.8
+pyasn1-modules==0.2.8
