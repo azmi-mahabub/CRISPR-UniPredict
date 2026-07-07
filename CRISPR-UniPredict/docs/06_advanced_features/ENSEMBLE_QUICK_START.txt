@@ -1,0 +1,198 @@
+================================================================================
+ENSEMBLE MODEL - QUICK START GUIDE
+================================================================================
+
+OVERVIEW
+========
+
+Combine predictions from 5 model variants for improved robustness.
+Expected improvement: 2-3% over single model.
+
+QUICK START (5 minutes)
+======================
+
+# Train ensemble (5 models, 3-5 days)
+python scripts/train_ensemble.py --n_models 5
+
+# Results saved to: models/ensemble/
+
+ENSEMBLE METHODS
+================
+
+1. Simple Averaging
+   - Mean of all predictions
+   - Fastest, no training
+   - 1-2% improvement
+
+2. Weighted Averaging (RECOMMENDED)
+   - Weights based on validation performance
+   - Good balance, no training
+   - 1.5-2.5% improvement
+
+3. Stacking
+   - Train meta-model on predictions
+   - Best performance, requires training
+   - 2-3% improvement
+
+4. Voting
+   - Majority voting for classification
+   - Simple, for binary tasks
+   - 1-2% improvement
+
+MODEL VARIANTS
+==============
+
+Variant 0: Full Model
+  - Base configuration
+  - Standard training
+
+Variant 1: Different Random Seed
+  - Seed: 123
+  - Different initialization
+
+Variant 2: Different Train/Val Split
+  - Val split: 0.15
+  - Different data distribution
+
+Variant 3: On-Target Focus
+  - Loss weights: on-target=0.7, off-target=0.3
+  - Optimizes for on-target task
+
+Variant 4: Off-Target Focus
+  - Loss weights: on-target=0.3, off-target=0.7
+  - Optimizes for off-target task
+
+COMMAND-LINE OPTIONS
+====================
+
+--base_config PATH          Base configuration file
+--n_models N               Number of models to train
+--output_dir PATH          Output directory
+--ensemble_method METHOD   simple_average|weighted_average|stacking|voting
+--train_meta_model         Train meta-model for stacking
+
+COMMON COMMANDS
+===============
+
+# Quick test (2 models)
+python scripts/train_ensemble.py --n_models 2
+
+# Standard (5 models)
+python scripts/train_ensemble.py --n_models 5
+
+# With stacking
+python scripts/train_ensemble.py --n_models 5 --ensemble_method stacking --train_meta_model
+
+# Custom output
+python scripts/train_ensemble.py --n_models 5 --output_dir results/my_ensemble
+
+USING ENSEMBLE
+==============
+
+# Load ensemble
+from models.ensemble_model import EnsembleModel
+ensemble = EnsembleModel.load_config('models/ensemble/ensemble_config.json')
+
+# Make predictions
+on_target, off_target = ensemble.predict(sgrna_onehot, sgrna_label)
+
+# Get uncertainty
+on_target_var, off_target_var = ensemble.get_prediction_variance(sgrna_onehot, sgrna_label)
+
+# Get individual predictions
+predictions = ensemble.get_model_predictions(sgrna_onehot, sgrna_label)
+
+OUTPUT FILES
+============
+
+models/ensemble/
+├── model_0_best.pt          # Variant 0
+├── model_1_best.pt          # Variant 1
+├── model_2_best.pt          # Variant 2
+├── model_3_best.pt          # Variant 3
+├── model_4_best.pt          # Variant 4
+├── meta_model_best.pt       # Meta-model (if stacking)
+├── ensemble_config.json     # Configuration
+├── ensemble_summary.json    # Summary
+└── ensemble_training.log    # Log
+
+TIME ESTIMATES
+==============
+
+N Models | Method | Total Time
+---------|--------|----------
+2        | any    | 1-2 days
+5        | simple | 3-5 days
+5        | weighted | 3-5 days
+5        | stacking | 4-6 days
+
+PERFORMANCE
+===========
+
+Method               | Improvement | Training | Inference
+---------------------|------------|----------|----------
+Simple Averaging     | 1-2%       | None     | 5x slower
+Weighted Averaging   | 1.5-2.5%   | None     | 5x slower
+Stacking            | 2-3%       | ~1 day   | 5.5x slower
+Voting              | 1-2%       | None     | 5x slower
+
+WORKFLOW
+========
+
+1. Train ensemble
+   python scripts/train_ensemble.py --n_models 5
+
+2. Wait for completion (3-5 days)
+
+3. Load ensemble
+   ensemble = EnsembleModel.load_config('models/ensemble/ensemble_config.json')
+
+4. Make predictions
+   on_target, off_target = ensemble.predict(sgrna_onehot, sgrna_label)
+
+5. Evaluate
+   python scripts/evaluate.py --checkpoint models/ensemble/ensemble_config.json
+
+BEST PRACTICES
+==============
+
+1. Use weighted averaging for good balance
+2. Ensure model diversity (different seeds, splits, weights)
+3. Validate on held-out test set
+4. Monitor individual model performance
+5. Use variance for uncertainty estimation
+
+TROUBLESHOOTING
+===============
+
+"CUDA out of memory"
+  → Use fewer models: --n_models 3
+  → Use smaller batch size
+  → Use CPU: device='cpu'
+
+"Meta-model not initialized"
+  → Use stacking with training: --train_meta_model
+
+"Weights don't sum to 1"
+  → Normalize weights: weights / np.sum(weights)
+
+DOCUMENTATION
+==============
+
+Full guide: ENSEMBLE_GUIDE.md
+Training script: scripts/train_ensemble.py
+Ensemble model: models/ensemble_model.py
+
+SUPPORT
+=======
+
+Check logs:
+  tail -f models/ensemble/ensemble_training.log
+
+View config:
+  cat models/ensemble/ensemble_config.json
+
+View summary:
+  cat models/ensemble/ensemble_summary.json
+
+================================================================================

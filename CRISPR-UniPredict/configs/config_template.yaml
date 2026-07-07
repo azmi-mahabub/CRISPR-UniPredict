@@ -1,0 +1,86 @@
+# CRISPR-UniPredict Configuration Template
+
+# Project settings
+project:
+  name: CRISPR-UniPredict
+  version: 1.0.0
+  description: Unified framework for CRISPR sgRNA design
+
+# Data settings
+data:
+  raw_data_dir: ./data/raw
+  processed_data_dir: ./data/processed
+  train_split: 0.8
+  validation_split: 0.1
+  test_split: 0.1
+  random_state: 42
+
+# CRISPR_HNN (On-Target) Model settings
+crispr_hnn:
+  name: CRISPR_HNN
+  task: regression
+  input_shape: [1, 23, 4]
+  
+  architecture:
+    type: hybrid_nn
+    conv_filters: [10, 10, 10, 10]
+    conv_kernels: [1, 3, 5, 7]
+    attention_heads: 4
+    gru_units: 128
+    dense_units: [80, 20]
+    dropout: 0.35
+  
+  training:
+    epochs: 200
+    batch_size: 16
+    learning_rate: 0.0001
+    optimizer: adamax
+    loss: mean_absolute_error
+    early_stopping_patience: 10
+    lr_schedule_patience: 5
+  
+  evaluation:
+    metrics: [mse, mae, pearson_r, spearman_r]
+
+# CCLMoff (Off-Target) Model settings
+cclmoff:
+  name: CCLMoff
+  task: classification
+  input_shape: [184]
+  
+  architecture:
+    type: random_forest
+    n_estimators: 100
+    max_depth: 15
+    min_samples_split: 2
+    min_samples_leaf: 1
+  
+  training:
+    epochs: 1
+    batch_size: 32
+    random_state: 42
+  
+  evaluation:
+    metrics: [accuracy, precision, recall, f1_score, auc_roc]
+
+# Preprocessing settings
+preprocessing:
+  sequence_length: 23
+  encoding_type: onehot
+  normalize: true
+  augmentation: false
+  augmentation_factor: 1
+
+# Output settings
+output:
+  results_dir: ./results
+  models_dir: ./models
+  logs_dir: ./logs
+  checkpoint_frequency: 10
+  save_best_only: true
+
+# Logging settings
+logging:
+  level: INFO
+  format: '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+  file: ./logs/training.log

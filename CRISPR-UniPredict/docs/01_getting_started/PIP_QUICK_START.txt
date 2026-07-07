@@ -1,0 +1,305 @@
+================================================================================
+                    PIP INSTALLATION QUICK START
+                      CRISPR-UniPredict
+================================================================================
+
+REQUIREMENTS FILES
+================================================================================
+
+1. requirements.txt
+   - Basic packages
+   - Lighter weight
+   - Quick setup
+
+2. requirements_complete.txt (RECOMMENDED)
+   - All packages including development tools
+   - Complete setup
+   - Recommended for full development
+
+
+================================================================================
+                    QUICK SETUP (5 STEPS)
+================================================================================
+
+STEP 1: Navigate to Project
+────────────────────────────────────────────────────────────────────────────
+cd "c:\Users\shahe\Desktop\both paper models\CRISPR-UniPredict"
+
+
+STEP 2: Create Virtual Environment
+────────────────────────────────────────────────────────────────────────────
+python -m venv crispr_env
+
+
+STEP 3: Activate Virtual Environment
+────────────────────────────────────────────────────────────────────────────
+Windows (Command Prompt):
+  crispr_env\Scripts\activate
+
+Windows (PowerShell):
+  crispr_env\Scripts\Activate.ps1
+
+macOS/Linux:
+  source crispr_env/bin/activate
+
+(You should see "(crispr_env)" in your terminal)
+
+
+STEP 4: Upgrade pip
+────────────────────────────────────────────────────────────────────────────
+python -m pip install --upgrade pip
+
+
+STEP 5: Install Requirements
+────────────────────────────────────────────────────────────────────────────
+pip install -r requirements_complete.txt
+
+(Takes 10-20 minutes depending on internet speed)
+
+
+================================================================================
+                    COMPLETE SETUP IN ONE BLOCK
+================================================================================
+
+Copy and paste this entire block:
+
+────────────────────────────────────────────────────────────────────────────
+cd "c:\Users\shahe\Desktop\both paper models\CRISPR-UniPredict" && ^
+python -m venv crispr_env && ^
+crispr_env\Scripts\activate && ^
+python -m pip install --upgrade pip && ^
+pip install -r requirements_complete.txt && ^
+python -c "import torch; print(f'PyTorch: {torch.__version__}'); print(f'CUDA: {torch.cuda.is_available()}')"
+────────────────────────────────────────────────────────────────────────────
+
+
+================================================================================
+                    VERIFICATION COMMANDS
+================================================================================
+
+After installation, verify everything works:
+
+Check Python:
+  python --version
+  Expected: Python 3.9.x
+
+Check PyTorch:
+  python -c "import torch; print(torch.__version__)"
+  Expected: 2.0.0
+
+Check CUDA:
+  python -c "import torch; print(torch.cuda.is_available())"
+  Expected: True
+
+Check Transformers:
+  python -c "import transformers; print(transformers.__version__)"
+  Expected: 4.30.0
+
+Check BioPython:
+  python -c "import Bio; print(Bio.__version__)"
+  Expected: 1.81
+
+Check All:
+  python -c "import torch, transformers, biopython, wandb, tensorboard, hydra; print('✓ All OK')"
+
+
+================================================================================
+                    PACKAGES INCLUDED
+================================================================================
+
+Core Scientific (4):
+  ✓ numpy, pandas, scipy, scikit-learn
+
+PyTorch & Deep Learning (3):
+  ✓ torch, torchvision, torchaudio
+
+Transformers & Models (3):
+  ✓ transformers, fair-esm, pytorch-lightning
+
+Visualization (3):
+  ✓ matplotlib, seaborn, plotly
+
+Experiment Tracking (3):
+  ✓ wandb, tensorboard, hydra-core
+
+Bioinformatics (1):
+  ✓ biopython
+
+Utilities (4):
+  ✓ pyyaml, tqdm, python-dotenv, requests
+
+Jupyter & Dev (4):
+  ✓ jupyter, jupyterlab, ipython, ipykernel
+
+Testing & Quality (5):
+  ✓ pytest, pytest-cov, black, flake8, isort
+
+Documentation (2):
+  ✓ sphinx, sphinx-rtd-theme
+
+
+================================================================================
+                    AFTER INSTALLATION
+================================================================================
+
+Start Jupyter Lab:
+  jupyter lab
+
+Run Python Script:
+  python scripts/train_on_target.py
+
+Run Tests:
+  pytest tests/
+
+Format Code:
+  black scripts/
+
+Lint Code:
+  flake8 scripts/
+
+Deactivate Environment:
+  deactivate
+
+
+================================================================================
+                    PYTORCH WITH GPU SUPPORT
+================================================================================
+
+If you need CUDA 11.8 support specifically:
+
+pip install torch==2.0.0 torchvision==0.15.2 torchaudio==2.0.1 --index-url https://download.pytorch.org/whl/cu118
+
+Then install other packages:
+
+pip install -r requirements_complete.txt
+
+
+================================================================================
+                    VIRTUAL ENVIRONMENT MANAGEMENT
+================================================================================
+
+Deactivate Environment:
+  deactivate
+
+Remove Virtual Environment:
+  rmdir /s crispr_env  (Windows)
+  rm -rf crispr_env    (macOS/Linux)
+
+Create Frozen Requirements:
+  pip freeze > requirements_frozen.txt
+
+Install from Frozen:
+  pip install -r requirements_frozen.txt
+
+Upgrade All Packages:
+  pip install --upgrade -r requirements_complete.txt
+
+Check Outdated Packages:
+  pip list --outdated
+
+
+================================================================================
+                    TROUBLESHOOTING
+================================================================================
+
+"pip: command not found"
+  Use: python -m pip install -r requirements_complete.txt
+
+"No module named torch"
+  Reinstall: pip install torch==2.0.0 --index-url https://download.pytorch.org/whl/cu118
+
+CUDA not available (shows False)
+  Check: nvidia-smi
+  Reinstall PyTorch with CUDA support
+
+Permission denied
+  Use: pip install --user -r requirements_complete.txt
+
+Conflicting dependencies
+  Clear cache: pip cache purge
+  Reinstall: pip install -r requirements_complete.txt --force-reinstall
+
+Slow installation
+  Use: pip install -r requirements_complete.txt --use-deprecated=legacy-resolver
+
+
+================================================================================
+                    SYSTEM REQUIREMENTS
+================================================================================
+
+Minimum:
+  - Python 3.9+
+  - 4 GB RAM
+  - 10 GB disk space
+
+Recommended:
+  - Python 3.9+
+  - 8+ GB RAM
+  - 20 GB disk space
+  - NVIDIA GPU with CUDA 11.8
+  - 50+ GB for datasets
+
+
+================================================================================
+                    FILE LOCATIONS
+================================================================================
+
+requirements.txt:
+  c:\Users\shahe\Desktop\both paper models\CRISPR-UniPredict\requirements.txt
+
+requirements_complete.txt:
+  c:\Users\shahe\Desktop\both paper models\CRISPR-UniPredict\requirements_complete.txt
+
+Project root:
+  c:\Users\shahe\Desktop\both paper models\CRISPR-UniPredict\
+
+
+================================================================================
+                    COMPARISON: CONDA vs PIP
+================================================================================
+
+Conda:
+  ✓ Better dependency resolution
+  ✓ Native CUDA support
+  ✓ Slower installation
+  ✓ Recommended for GPU
+
+Pip:
+  ✓ Faster installation
+  ✓ Larger package selection
+  ✓ Requires index-url for CUDA
+  ✓ Recommended for CPU/Mixed
+
+
+================================================================================
+                    NEXT STEPS
+================================================================================
+
+1. Create virtual environment:
+   python -m venv crispr_env
+
+2. Activate environment:
+   crispr_env\Scripts\activate
+
+3. Install requirements:
+   pip install -r requirements_complete.txt
+
+4. Verify installation:
+   python -c "import torch; print(torch.cuda.is_available())"
+
+5. Start development:
+   jupyter lab
+
+
+================================================================================
+
+Ready to start? Run:
+
+  cd "c:\Users\shahe\Desktop\both paper models\CRISPR-UniPredict"
+  python -m venv crispr_env
+  crispr_env\Scripts\activate
+  pip install -r requirements_complete.txt
+
+Happy coding! 🚀
+
+================================================================================

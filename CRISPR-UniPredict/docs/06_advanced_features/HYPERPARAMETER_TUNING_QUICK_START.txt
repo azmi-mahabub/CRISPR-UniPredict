@@ -1,0 +1,296 @@
+================================================================================
+HYPERPARAMETER TUNING - QUICK START GUIDE
+================================================================================
+
+INSTALLATION
+============
+
+pip install optuna matplotlib seaborn pyyaml
+
+QUICK START (5 minutes)
+======================
+
+# Run 50 trials (3-5 days)
+python scripts/hyperparameter_tuning.py --n_trials 50
+
+# Results saved to: results/hyperparameter_tuning/
+# - best_hyperparameters.yaml (ready to use)
+# - optimization_report.png (visualization)
+# - all_trials.json (detailed results)
+
+
+HYPERPARAMETERS TUNED
+====================
+
+Learning Rates:
+  • rna_fm_lr: [1e-5, 1e-3]
+  • feature_extraction_lr: [5e-4, 5e-3]
+  • task_heads_lr: [5e-4, 5e-3]
+
+Architecture:
+  • msc_out_channels: [32, 64, 128]
+  • bigru_hidden_dim: [64, 128, 256]
+  • mhsa_num_heads: [2, 4, 8]
+  • dropout_rate: [0.2, 0.5]
+
+Training:
+  • batch_size: [64, 128, 256]
+  • warmup_epochs: [3, 5, 10]
+  • loss_weight_on_target: [0.3, 0.7]
+  • loss_weight_off_target: [0.3, 0.7]
+
+Optimizer:
+  • weight_decay: [1e-5, 1e-3]
+  • gradient_clip: [0.5, 2.0]
+  • scheduler_patience: [3, 5, 7]
+  • scheduler_factor: [0.1, 0.5]
+
+
+COMMAND-LINE OPTIONS
+====================
+
+--n_trials N            Number of trials (default: 50)
+--study_name NAME       Study name (default: crispr_optimization)
+--storage URL           Storage URL (e.g., sqlite:///optuna_study.db)
+--output_dir PATH       Output directory (default: results/hyperparameter_tuning)
+--config PATH           Base config (default: configs/model_config.yaml)
+--resume                Resume previous study
+
+
+COMMON COMMANDS
+===============
+
+# Quick test (10 trials, ~2-3 hours)
+python scripts/hyperparameter_tuning.py --n_trials 10
+
+# Standard optimization (50 trials, ~3-5 days)
+python scripts/hyperparameter_tuning.py --n_trials 50
+
+# Extended optimization (100 trials, ~1-2 weeks)
+python scripts/hyperparameter_tuning.py --n_trials 100
+
+# With persistent storage
+python scripts/hyperparameter_tuning.py \
+  --n_trials 50 \
+  --storage sqlite:///optuna_study.db
+
+# Resume previous study
+python scripts/hyperparameter_tuning.py \
+  --n_trials 50 \
+  --storage sqlite:///optuna_study.db \
+  --resume
+
+# Custom output directory
+python scripts/hyperparameter_tuning.py \
+  --n_trials 50 \
+  --output_dir results/my_optimization
+
+
+OPTIMIZATION STRATEGY
+====================
+
+Objective: Maximize Combined Score = (SCC + AUROC) / 2
+
+Algorithm: TPE Sampler (Bayesian Optimization)
+  • Efficient exploration-exploitation
+  • Good for high-dimensional spaces
+  • Learns from previous trials
+
+Pruning: Median Pruner
+  • Stops unpromising trials early
+  • Saves computation time
+  • Configurable thresholds
+
+
+OUTPUT FILES
+============
+
+results/hyperparameter_tuning/
+├── best_hyperparameters.yaml    ← Use for training
+├── all_trials.json              ← All trial results
+├── optuna_study.pkl             ← Study object
+├── summary.json                 ← Quick summary
+├── optimization_report.png      ← Visualization
+└── tuning.log                   ← Detailed log
+
+
+ANALYZING RESULTS
+=================
+
+# Print summary
+python scripts/analyze_hyperparameter_results.py
+
+# Show top 20 trials
+python scripts/analyze_hyperparameter_results.py --top_n 20
+
+# Generate detailed report
+python scripts/analyze_hyperparameter_results.py --detailed_report
+
+# Custom results directory
+python scripts/analyze_hyperparameter_results.py \
+  --results_dir results/my_optimization
+
+
+USING BEST HYPERPARAMETERS
+===========================
+
+# Train with best hyperparameters
+python scripts/train.py \
+  --config results/hyperparameter_tuning/best_hyperparameters.yaml \
+  --experiment_name optimized_model
+
+# Evaluate
+python scripts/evaluate.py \
+  --checkpoint models/checkpoints/best.pt \
+  --test_data data/processed/combined/test.csv
+
+
+TIME ESTIMATES
+==============
+
+Trials | Epochs/Trial | Total Time
+-------|-------------|----------
+10     | 20          | 2-3 hours
+50     | 20          | 3-5 days
+100    | 20          | 1-2 weeks
+
+Factors affecting time:
+  • Dataset size
+  • Model complexity
+  • GPU availability
+  • Early stopping effectiveness
+
+
+OPTIMIZATION HISTORY
+====================
+
+The optimization_report.png shows:
+
+1. Optimization History
+   - X: Trial number
+   - Y: Combined score
+   - Red line: Best score
+
+2. Parameter Importance
+   - Which parameters matter most
+   - Top 5 parameters shown
+
+3. Score Distribution
+   - Histogram of all scores
+   - Mean and range
+
+4. SCC vs AUROC
+   - Relationship between tasks
+   - Outliers indicate interesting combinations
+
+5. Batch Size Effect
+   - How batch size affects performance
+
+6. Learning Rate Effect
+   - How learning rate affects performance
+
+7. Dropout Effect
+   - How dropout affects performance
+
+8. Score Over Time
+   - Performance trend
+
+
+TROUBLESHOOTING
+===============
+
+"CUDA out of memory"
+  → Reduce batch size range in script
+  → Reduce number of epochs per trial
+
+"No improvement after many trials"
+  → Expand search ranges
+  → Increase number of trials
+  → Check if baseline is already optimal
+
+"Trials are very slow"
+  → Reduce epochs per trial
+  → Use smaller dataset for tuning
+  → Enable GPU acceleration
+
+"Study not found"
+  → Check storage URL
+  → Start new study with different name
+
+
+BEST PRACTICES
+==============
+
+1. Start with baseline
+   python scripts/train.py --config configs/model_config.yaml
+
+2. Use persistent storage
+   --storage sqlite:///optuna_study.db
+
+3. Monitor progress
+   tail -f results/hyperparameter_tuning/tuning.log
+
+4. Validate results
+   python scripts/train.py --config results/hyperparameter_tuning/best_hyperparameters.yaml
+
+5. Compare with baseline
+   Check if improvement is significant
+
+
+OPTIMIZATION WORKFLOW
+====================
+
+1. Run optimization
+   python scripts/hyperparameter_tuning.py --n_trials 50
+
+2. Wait for completion (3-5 days)
+   Monitor: tail -f results/hyperparameter_tuning/tuning.log
+
+3. Analyze results
+   python scripts/analyze_hyperparameter_results.py --detailed_report
+
+4. Train with best hyperparameters
+   python scripts/train.py --config results/hyperparameter_tuning/best_hyperparameters.yaml
+
+5. Evaluate on test set
+   python scripts/evaluate.py --checkpoint models/checkpoints/best.pt
+
+6. Compare with baseline
+   Check if improvement is significant
+
+
+PERFORMANCE TIPS
+================
+
+• Use persistent storage for long runs
+• Monitor GPU utilization
+• Check memory usage
+• Adjust batch size if OOM errors occur
+• Reduce epochs per trial for faster feedback
+• Increase number of trials for better coverage
+
+
+DOCUMENTATION
+==============
+
+Full guide: HYPERPARAMETER_TUNING_GUIDE.md
+Analysis script: scripts/analyze_hyperparameter_results.py
+Tuning script: scripts/hyperparameter_tuning.py
+
+
+SUPPORT
+=======
+
+Check logs:
+  tail -f results/hyperparameter_tuning/tuning.log
+
+View results:
+  cat results/hyperparameter_tuning/summary.json
+
+Analyze:
+  python scripts/analyze_hyperparameter_results.py
+
+See documentation:
+  HYPERPARAMETER_TUNING_GUIDE.md
+
+================================================================================

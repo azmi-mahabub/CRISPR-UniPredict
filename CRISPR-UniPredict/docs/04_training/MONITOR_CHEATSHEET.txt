@@ -1,0 +1,191 @@
+╔════════════════════════════════════════════════════════════════════════════════╗
+║                  CRISPR-UniPredict Training Monitor Cheatsheet                   ║
+╚════════════════════════════════════════════════════════════════════════════════╝
+
+┌─ INSTALLATION ──────────────────────────────────────────────────────────────────┐
+│                                                                                  │
+│  # All features                                                                  │
+│  pip install psutil torch numpy matplotlib seaborn dash plotly                  │
+│                                                                                  │
+│  # Minimal (console only)                                                        │
+│  pip install psutil torch numpy                                                 │
+│                                                                                  │
+└──────────────────────────────────────────────────────────────────────────────────┘
+
+┌─ QUICK START ───────────────────────────────────────────────────────────────────┐
+│                                                                                  │
+│  # Terminal 1: Start training                                                    │
+│  python scripts/train.py --config configs/model_config.yaml                     │
+│                                                                                  │
+│  # Terminal 2: Monitor (choose one)                                              │
+│  python scripts/monitor_training.py --log_dir logs/exp_001_* --mode console     │
+│  python scripts/monitor_training.py --log_dir logs/exp_001_* --mode matplotlib  │
+│  python scripts/monitor_training.py --log_dir logs/exp_001_* --mode dash        │
+│                                                                                  │
+└──────────────────────────────────────────────────────────────────────────────────┘
+
+┌─ MONITORING MODES ──────────────────────────────────────────────────────────────┐
+│                                                                                  │
+│  ┌─ CONSOLE (Lightweight) ─────────────────────────────────────────────────────┐ │
+│  │ Command:  --mode console                                                    │ │
+│  │ CPU:      <1%                                                               │ │
+│  │ Memory:   ~50 MB                                                            │ │
+│  │ Best for: SSH, remote servers, minimal overhead                             │ │
+│  │ Output:   Terminal status updates                                           │ │
+│  └─────────────────────────────────────────────────────────────────────────────┘ │
+│                                                                                  │
+│  ┌─ MATPLOTLIB (Interactive) ──────────────────────────────────────────────────┐ │
+│  │ Command:  --mode matplotlib                                                │ │
+│  │ CPU:      2-5%                                                              │ │
+│  │ Memory:   ~200 MB                                                           │ │
+│  │ Best for: Local monitoring, interactive analysis                            │ │
+│  │ Output:   6-plot dashboard with live updates                                │ │
+│  └─────────────────────────────────────────────────────────────────────────────┘ │
+│                                                                                  │
+│  ┌─ DASH (Web-Based) ──────────────────────────────────────────────────────────┐ │
+│  │ Command:  --mode dash --port 8050                                           │ │
+│  │ CPU:      3-8%                                                              │ │
+│  │ Memory:   ~300 MB                                                           │ │
+│  │ Best for: Web access, team collaboration, presentations                     │ │
+│  │ Output:   Browser at http://localhost:8050                                  │ │
+│  └─────────────────────────────────────────────────────────────────────────────┘ │
+│                                                                                  │
+└──────────────────────────────────────────────────────────────────────────────────┘
+
+┌─ COMMAND-LINE OPTIONS ──────────────────────────────────────────────────────────┐
+│                                                                                  │
+│  --log_dir PATH          Training log directory (required)                       │
+│  --refresh_rate SECONDS  Update frequency (default: 10)                          │
+│  --mode MODE            console|matplotlib|dash (default: console)              │
+│  --save_snapshots       Save matplotlib snapshots to disk                        │
+│  --port PORT            Dash port (default: 8050)                               │
+│                                                                                  │
+└──────────────────────────────────────────────────────────────────────────────────┘
+
+┌─ COMMON COMMANDS ───────────────────────────────────────────────────────────────┐
+│                                                                                  │
+│  # Console with 5-second updates                                                 │
+│  python scripts/monitor_training.py --log_dir logs/exp_001_* --refresh_rate 5   │
+│                                                                                  │
+│  # Matplotlib with snapshots every 30 seconds                                    │
+│  python scripts/monitor_training.py --log_dir logs/exp_001_* --mode matplotlib  │
+│    --refresh_rate 30 --save_snapshots                                           │
+│                                                                                  │
+│  # Web dashboard on custom port                                                  │
+│  python scripts/monitor_training.py --log_dir logs/exp_001_* --mode dash        │
+│    --port 9000                                                                  │
+│                                                                                  │
+│  # Monitor multiple experiments                                                  │
+│  python scripts/monitor_training.py --log_dir logs/exp_001_* --mode dash --port 8050 &
+│  python scripts/monitor_training.py --log_dir logs/exp_002_* --mode dash --port 8051 &
+│                                                                                  │
+└──────────────────────────────────────────────────────────────────────────────────┘
+
+┌─ MONITORED METRICS ─────────────────────────────────────────────────────────────┐
+│                                                                                  │
+│  Training:                                                                       │
+│    • Total loss, on-target loss, off-target loss                                │
+│                                                                                  │
+│  Validation:                                                                     │
+│    • SCC (Spearman Correlation Coefficient)                                     │
+│    • PCC (Pearson Correlation Coefficient)                                      │
+│    • AUROC (Area Under ROC Curve)                                               │
+│    • AUPRC (Area Under Precision-Recall Curve)                                  │
+│                                                                                  │
+│  System:                                                                         │
+│    • CPU usage (%)                                                              │
+│    • RAM usage (% and GB)                                                       │
+│    • GPU utilization (%)                                                        │
+│    • VRAM usage (GB)                                                            │
+│    • Gradient norms (L2)                                                        │
+│                                                                                  │
+└──────────────────────────────────────────────────────────────────────────────────┘
+
+┌─ ALERTS ────────────────────────────────────────────────────────────────────────┐
+│                                                                                  │
+│  🚨 CRITICAL                                                                     │
+│    • Gradient explosion (loss = NaN)                                            │
+│    • High memory usage (>90%)                                                   │
+│                                                                                  │
+│  ⚠️  WARNINGS                                                                    │
+│    • Training stalled (no improvement for N epochs)                             │
+│    • Validation loss increasing                                                 │
+│    • Gradient vanishing (loss plateau)                                          │
+│                                                                                  │
+│  ℹ️  INFO                                                                        │
+│    • Best model checkpoint                                                      │
+│    • Improvement tracking                                                       │
+│    • Patience counter                                                           │
+│                                                                                  │
+└──────────────────────────────────────────────────────────────────────────────────┘
+
+┌─ DASHBOARD LAYOUT ──────────────────────────────────────────────────────────────┐
+│                                                                                  │
+│  ┌─────────────────────┬──────────────────┬──────────────────┐                  │
+│  │  Training Loss      │  Val Metrics     │  Learning Rate   │                  │
+│  │  (train vs val)     │  (SCC, PCC)      │  (schedule)      │                  │
+│  ├─────────────────────┼──────────────────┼──────────────────┤                  │
+│  │  GPU Utilization    │  Memory Usage    │  Gradient Norm   │                  │
+│  │  (%)                │  (% and GB)      │  (L2 norm)       │                  │
+│  ├─────────────────────┼──────────────────┼──────────────────┤                  │
+│  │  On-Target Corr     │  Off-Target      │  Alerts/Status   │                  │
+│  │  (SCC, PCC)         │  (AUROC, AUPRC)  │  (summary)       │                  │
+│  └─────────────────────┴──────────────────┴──────────────────┘                  │
+│                                                                                  │
+└──────────────────────────────────────────────────────────────────────────────────┘
+
+┌─ TESTING ───────────────────────────────────────────────────────────────────────┐
+│                                                                                  │
+│  # Generate sample training data                                                 │
+│  python scripts/test_monitor.py --mode generate --epochs 20                     │
+│                                                                                  │
+│  # Simulate live training                                                        │
+│  python scripts/test_monitor.py --mode simulate --epochs 10 --epoch_duration 5  │
+│                                                                                  │
+│  # Test monitor with generated data                                              │
+│  python scripts/monitor_training.py --log_dir logs/test_monitor --mode console  │
+│                                                                                  │
+└──────────────────────────────────────────────────────────────────────────────────┘
+
+┌─ TROUBLESHOOTING ───────────────────────────────────────────────────────────────┐
+│                                                                                  │
+│  Problem: "No metrics found" or "Waiting for training data..."                  │
+│  Solution: Wait for first epoch, verify log directory path                      │
+│                                                                                  │
+│  Problem: Dash won't start                                                      │
+│  Solution: pip install dash plotly                                              │
+│                                                                                  │
+│  Problem: Matplotlib not updating                                               │
+│  Solution: Increase refresh rate: --refresh_rate 30                             │
+│                                                                                  │
+│  Problem: High CPU usage                                                        │
+│  Solution: Use console mode or increase refresh rate                            │
+│                                                                                  │
+│  Problem: GPU metrics not showing                                               │
+│  Solution: Check CUDA: python -c "import torch; print(torch.cuda.is_available())"
+│                                                                                  │
+└──────────────────────────────────────────────────────────────────────────────────┘
+
+┌─ DOCUMENTATION ─────────────────────────────────────────────────────────────────┐
+│                                                                                  │
+│  MONITOR_QUICK_START.txt        Quick reference (1 page)                        │
+│  MONITOR_TRAINING_GUIDE.md      Complete guide (400+ lines)                     │
+│  MONITOR_INTEGRATION_GUIDE.md   Integration patterns (400+ lines)                │
+│  MONITOR_IMPLEMENTATION_SUMMARY.md  Project overview                            │
+│                                                                                  │
+└──────────────────────────────────────────────────────────────────────────────────┘
+
+┌─ PERFORMANCE ───────────────────────────────────────────────────────────────────┐
+│                                                                                  │
+│  Mode        │ CPU Usage │ Memory  │ Best For                                   │
+│  ─────────────┼───────────┼─────────┼──────────────────────────────────────────  │
+│  Console     │ <1%       │ 50 MB   │ SSH, remote, minimal overhead              │
+│  Matplotlib  │ 2-5%      │ 200 MB  │ Local, interactive analysis                │
+│  Dash        │ 3-8%      │ 300 MB  │ Web, team, presentations                   │
+│                                                                                  │
+└──────────────────────────────────────────────────────────────────────────────────┘
+
+╔════════════════════════════════════════════════════════════════════════════════╗
+║  For full documentation, see MONITOR_TRAINING_GUIDE.md                         ║
+║  For integration examples, see MONITOR_INTEGRATION_GUIDE.md                    ║
+╚════════════════════════════════════════════════════════════════════════════════╝

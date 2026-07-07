@@ -1,0 +1,188 @@
+================================================================================
+                    CRISPR-UniPredict Documentation
+                         Folder Organization Guide
+================================================================================
+
+MAIN ENTRY POINT:
+  📄 docs/README.md - Start here for navigation and overview
+
+================================================================================
+FOLDER STRUCTURE (8 Categories)
+================================================================================
+
+📂 01_getting_started/ (10 files)
+   └─ Installation, setup, and environment configuration
+   └─ Best for: New users, getting started quickly
+   └─ Key files:
+      • QUICK_SETUP.txt - 5-minute setup guide
+      • INSTALLATION_OPTIONS.md - Multiple installation methods
+      • COMPLETE_SYSTEM_GUIDE.md - Full system overview
+
+📂 02_architecture/ (3 files)
+   └─ Model design, components, and architecture details
+   └─ Best for: Understanding the system design
+   └─ Key files:
+      • CRISPR_UNIPREDICT_ARCHITECTURE.md - Detailed architecture
+      • BIGRU_MODULE_GUIDE.md - BiGRU component guide
+      • COMPREHENSIVE_SCORE_GUIDE.md - Scoring system
+
+📂 03_data_pipeline/ (13 files)
+   └─ Data loading, preprocessing, configuration, and validation
+   └─ Best for: Working with data and configuration
+   └─ Key files:
+      • DATASET_GUIDE.md - Dataset format and usage
+      • CONFIG_GUIDE.md - Configuration system
+      • DATALOADER_FACTORY_GUIDE.md - DataLoader creation
+      • COLLATE_GUIDE.md - Batch collation and padding
+      • SAMPLER_GUIDE.md - Sampling strategies
+
+📂 04_training/ (12 files)
+   └─ Training, optimization, monitoring, and loss functions
+   └─ Best for: Training models and monitoring progress
+   └─ Key files:
+      • TRAINING_SCRIPT_GUIDE.md - Main training script
+      • MONITOR_QUICK_START.txt - Quick monitoring setup
+      • OPTIMIZATION_GUIDE.md - Optimizer configuration
+      • LOSSES_GUIDE.md - Loss functions
+      • METRICS_GUIDE.md - Evaluation metrics
+
+📂 05_evaluation/ (5 files)
+   └─ Model evaluation, analysis, and visualization
+   └─ Best for: Evaluating and analyzing results
+   └─ Key files:
+      • EVALUATION_GUIDE.md - Comprehensive evaluation
+      • FEATURE_IMPORTANCE_GUIDE.md - Feature analysis
+      • ATTENTION_VISUALIZATION_GUIDE.md - Attention visualization
+      • BASELINE_MODELS_GUIDE.md - Baseline comparison
+
+📂 06_advanced_features/ (14 files)
+   └─ Hyperparameter tuning, ensembles, ablation, active learning
+   └─ Best for: Advanced techniques and optimization
+   └─ Key files:
+      • HYPERPARAMETER_TUNING_QUICK_START.txt - Quick tuning
+      • ENSEMBLE_QUICK_START.txt - Ensemble methods
+      • ABLATION_STUDY_GUIDE.md - Ablation studies
+      • ACTIVE_LEARNING_GUIDE.md - Active learning
+      • TRANSFER_LEARNING_QUICK_START.txt - Transfer learning
+
+📂 07_deployment/ (2 files)
+   └─ Production deployment and API documentation
+   └─ Best for: Deploying to production
+   └─ Key files:
+      • DEPLOYMENT_GUIDE.md - Production deployment
+      • API_GUIDE.md - REST API reference
+
+📂 08_reference/ (14 files)
+   └─ Reference materials, checklists, and API documentation
+   └─ Best for: Technical reference and API details
+   └─ Key files:
+      • API_REFERENCE.md - Detailed API reference
+      • INDEX.md - Complete documentation index
+      • COMPLETION_CHECKLIST.md - Project checklist
+      • IMPLEMENTATION_SUMMARY.md - Implementation overview
+
+================================================================================
+QUICK NAVIGATION BY USE CASE
+================================================================================
+
+🚀 "I'm new, where do I start?"
+   → docs/01_getting_started/QUICK_SETUP.txt
+   → docs/01_getting_started/COMPLETE_SYSTEM_GUIDE.md
+   → docs/02_architecture/CRISPR_UNIPREDICT_ARCHITECTURE.md
+
+📊 "I want to prepare and load data"
+   → docs/03_data_pipeline/DATASET_GUIDE.md
+   → docs/03_data_pipeline/CONFIG_GUIDE.md
+   → docs/03_data_pipeline/DATALOADER_FACTORY_GUIDE.md
+
+🎓 "I want to train a model"
+   → docs/04_training/TRAINING_SCRIPT_GUIDE.md
+   → docs/04_training/OPTIMIZATION_GUIDE.md
+   → docs/04_training/MONITOR_QUICK_START.txt
+
+📈 "I want to evaluate my model"
+   → docs/05_evaluation/EVALUATION_GUIDE.md
+   → docs/05_evaluation/FEATURE_IMPORTANCE_GUIDE.md
+   → docs/05_evaluation/ATTENTION_VISUALIZATION_GUIDE.md
+
+🔧 "I want to optimize hyperparameters"
+   → docs/06_advanced_features/HYPERPARAMETER_TUNING_QUICK_START.txt
+   → docs/06_advanced_features/HYPERPARAMETER_TUNING_GUIDE.md
+
+🎯 "I want to use ensembles"
+   → docs/06_advanced_features/ENSEMBLE_QUICK_START.txt
+   → docs/06_advanced_features/ENSEMBLE_GUIDE.md
+
+🌐 "I want to deploy to production"
+   → docs/07_deployment/DEPLOYMENT_GUIDE.md
+   → docs/07_deployment/API_GUIDE.md
+
+📚 "I need API documentation"
+   → docs/08_reference/API_REFERENCE.md
+   → docs/08_reference/INDEX.md
+
+================================================================================
+FILE STATISTICS
+================================================================================
+
+Total Documentation Files:  73 files
+Total Documentation Size:   ~500 KB
+File Types:                 Markdown (.md) and Text (.txt)
+
+Breakdown:
+  01_getting_started:      10 files
+  02_architecture:          3 files
+  03_data_pipeline:        13 files
+  04_training:             12 files
+  05_evaluation:            5 files
+  06_advanced_features:    14 files
+  07_deployment:            2 files
+  08_reference:            14 files
+  README.md:                1 file
+
+================================================================================
+TIPS FOR USING THIS DOCUMENTATION
+================================================================================
+
+✓ Start with README.md in the docs folder
+✓ Use quick start (.txt) files for rapid setup
+✓ Use detailed guides (.md) for comprehensive information
+✓ Follow the folder structure for logical organization
+✓ Use Ctrl+F to search within files
+✓ Check the reference section for API details
+✓ Review checklists for tracking progress
+
+================================================================================
+FOLDER ORGANIZATION BENEFITS
+================================================================================
+
+✅ Logical Organization    - Files grouped by topic
+✅ Easy Navigation         - Find what you need quickly
+✅ Multiple Entry Points   - Different paths for different users
+✅ Scalable Structure      - Easy to add new documentation
+✅ Professional Layout     - Clean, organized appearance
+✅ Comprehensive Coverage  - All 73 files organized
+✅ User-Friendly          - Clear naming and structure
+✅ Quick Reference        - Fast access to key information
+
+================================================================================
+ACCESSING THE DOCUMENTATION
+================================================================================
+
+From the project root:
+  → Open: docs/README.md
+
+From your IDE:
+  → Navigate to: docs/ folder
+  → Start with: README.md
+  → Browse folders by category
+
+From command line:
+  → cd docs
+  → ls (or dir on Windows)
+  → Open any .md or .txt file in your editor
+
+================================================================================
+LAST UPDATED: 2024
+STATUS: ✅ Complete - All 73 documentation files organized
+================================================================================

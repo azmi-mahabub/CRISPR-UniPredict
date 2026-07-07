@@ -1,0 +1,190 @@
+================================================================================
+CRISPR-UniPredict Training Monitor - Quick Start Guide
+================================================================================
+
+INSTALLATION
+============
+
+# Install all dependencies
+pip install psutil torch numpy matplotlib seaborn dash plotly
+
+# Or install individually:
+pip install psutil torch numpy              # Console mode
+pip install matplotlib seaborn              # Matplotlib mode
+pip install dash plotly                     # Dash web mode
+
+
+QUICK START
+===========
+
+1. Start Training (Terminal 1)
+   python scripts/train.py --config configs/model_config.yaml
+
+2. Monitor Training (Terminal 2)
+   
+   # Console mode (recommended for SSH/remote)
+   python scripts/monitor_training.py --log_dir logs/exp_001_* --mode console
+   
+   # OR Matplotlib dashboard
+   python scripts/monitor_training.py --log_dir logs/exp_001_* --mode matplotlib
+   
+   # OR Web dashboard (open http://localhost:8050)
+   python scripts/monitor_training.py --log_dir logs/exp_001_* --mode dash
+
+
+MONITORING MODES
+================
+
+Console Mode
+  Command: python scripts/monitor_training.py --log_dir logs/exp_001_* --mode console
+  Output: Terminal-based status updates
+  CPU: <1%
+  Memory: ~50 MB
+  Best for: SSH, remote servers, minimal overhead
+
+Matplotlib Mode
+  Command: python scripts/monitor_training.py --log_dir logs/exp_001_* --mode matplotlib
+  Output: Interactive dashboard with 6 plots
+  CPU: 2-5%
+  Memory: ~200 MB
+  Best for: Local monitoring, interactive analysis
+
+Dash Web Mode
+  Command: python scripts/monitor_training.py --log_dir logs/exp_001_* --mode dash --port 8050
+  Output: Web dashboard at http://localhost:8050
+  CPU: 3-8%
+  Memory: ~300 MB
+  Best for: Web access, team monitoring, presentations
+
+
+MONITORED METRICS
+=================
+
+Training:
+  - Train Loss (total, on-target, off-target)
+  - Validation Loss (total, on-target, off-target)
+
+Validation:
+  - SCC (Spearman Correlation Coefficient)
+  - PCC (Pearson Correlation Coefficient)
+  - AUROC (Area Under ROC Curve)
+  - AUPRC (Area Under Precision-Recall Curve)
+
+System:
+  - CPU Usage (%)
+  - RAM Usage (% and GB)
+  - GPU Utilization (%)
+  - VRAM Usage (GB)
+  - Gradient Norm
+
+
+ALERTS
+======
+
+The monitor automatically detects:
+
+Critical 🚨
+  - Gradient explosion (loss = NaN)
+  - High memory usage (>90%)
+
+Warnings ⚠️
+  - Training stalled (no improvement for N epochs)
+  - Validation loss increasing
+  - Gradient vanishing (loss plateau)
+
+Info ℹ️
+  - Best model checkpoint
+  - Improvement tracking
+
+
+COMMAND-LINE OPTIONS
+====================
+
+--log_dir PATH          Training log directory (required)
+--refresh_rate SECONDS  Update frequency (default: 10)
+--mode MODE            console|matplotlib|dash (default: console)
+--save_snapshots       Save matplotlib snapshots
+--port PORT            Dash port (default: 8050)
+
+
+EXAMPLES
+========
+
+1. Monitor with 5-second updates
+   python scripts/monitor_training.py --log_dir logs/exp_001_* --refresh_rate 5
+
+2. Save dashboard snapshots every 30 seconds
+   python scripts/monitor_training.py --log_dir logs/exp_001_* --mode matplotlib --refresh_rate 30 --save_snapshots
+
+3. Web dashboard on custom port
+   python scripts/monitor_training.py --log_dir logs/exp_001_* --mode dash --port 9000
+
+4. Monitor multiple experiments
+   # Terminal 1
+   python scripts/monitor_training.py --log_dir logs/exp_001_* --mode dash --port 8050
+   
+   # Terminal 2
+   python scripts/monitor_training.py --log_dir logs/exp_002_* --mode dash --port 8051
+
+
+TROUBLESHOOTING
+===============
+
+"No metrics found"
+  → Training hasn't started or log directory is wrong
+  → Wait for first epoch to complete
+
+Dash won't start
+  → Install: pip install dash plotly
+  → Try different port: --port 8051
+
+Matplotlib not updating
+  → Increase refresh rate: --refresh_rate 30
+  → Check matplotlib backend
+
+High CPU usage
+  → Increase refresh rate: --refresh_rate 30
+  → Use console mode instead
+
+
+INTEGRATION
+===========
+
+The monitor reads from standard training output:
+  logs/exp_001_YYYYMMDD_HHMMSS/
+  ├── training.log
+  ├── config.json
+  └── training_history.json  ← Monitor reads this
+
+No changes needed to training script!
+
+
+PERFORMANCE
+===========
+
+Console Mode:  <1% CPU, ~50 MB RAM   → Best for remote
+Matplotlib:    2-5% CPU, ~200 MB RAM → Best for local
+Dash:          3-8% CPU, ~300 MB RAM → Best for web access
+
+
+DOCUMENTATION
+==============
+
+Full guide: MONITOR_TRAINING_GUIDE.md
+Training guide: TRAINER_GUIDE.md
+Optimization guide: OPTIMIZATION_GUIDE.md
+
+
+SUPPORT
+=======
+
+Check logs:
+  cat logs/exp_001_*/training.log
+
+Verify metrics file:
+  ls -la logs/exp_001_*/training_history.json
+
+Check system resources:
+  htop (Linux) or Task Manager (Windows)
+
+================================================================================

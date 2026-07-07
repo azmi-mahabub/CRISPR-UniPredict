@@ -1,0 +1,248 @@
+================================================================================
+                    CRISPR-UniPredict CONDA ENVIRONMENT SETUP
+                              QUICK REFERENCE
+================================================================================
+
+ENVIRONMENT SPECIFICATIONS
+================================================================================
+Name:               crispr_unipredict
+Python:             3.9
+PyTorch:            2.0.0
+CUDA:               11.8
+Location:           c:\Users\shahe\Desktop\both paper models\CRISPR-UniPredict\
+
+================================================================================
+                          SETUP COMMANDS (COPY & PASTE)
+================================================================================
+
+STEP 1: Navigate to Project Directory
+────────────────────────────────────────────────────────────────────────────
+cd "c:\Users\shahe\Desktop\both paper models\CRISPR-UniPredict"
+
+
+STEP 2: Create Environment from environment.yml
+────────────────────────────────────────────────────────────────────────────
+conda env create -f environment.yml
+
+(This will take 5-15 minutes depending on internet speed)
+
+
+STEP 3: Activate Environment
+────────────────────────────────────────────────────────────────────────────
+conda activate crispr_unipredict
+
+(You should see "(crispr_unipredict)" in your terminal prompt)
+
+
+STEP 4: Verify Installation (Optional but Recommended)
+────────────────────────────────────────────────────────────────────────────
+python --version
+
+python -c "import torch; print(f'PyTorch: {torch.__version__}'); print(f'CUDA: {torch.cuda.is_available()}')"
+
+python -c "import transformers; print(f'Transformers: {transformers.__version__}')"
+
+python -c "import biopython; print('BioPython: OK')"
+
+
+================================================================================
+                          COMPLETE SETUP IN ONE BLOCK
+================================================================================
+
+Copy and paste this entire block into your terminal:
+
+────────────────────────────────────────────────────────────────────────────
+cd "c:\Users\shahe\Desktop\both paper models\CRISPR-UniPredict" && ^
+conda env create -f environment.yml && ^
+conda activate crispr_unipredict && ^
+python --version && ^
+python -c "import torch; print(f'PyTorch: {torch.__version__}'); print(f'CUDA: {torch.cuda.is_available()}')"
+────────────────────────────────────────────────────────────────────────────
+
+
+================================================================================
+                          COMMON COMMANDS
+================================================================================
+
+List all environments:
+  conda env list
+
+Deactivate current environment:
+  conda deactivate
+
+Remove environment:
+  conda remove --name crispr_unipredict --all
+
+Update environment:
+  conda env update -f environment.yml --prune
+
+Start Jupyter Lab:
+  jupyter lab
+
+Run Python script:
+  python scripts/train_on_target.py
+
+Run tests:
+  pytest tests/
+
+
+================================================================================
+                          INCLUDED PACKAGES
+================================================================================
+
+Core Scientific:
+  ✓ numpy, pandas, scipy, scikit-learn
+
+Visualization:
+  ✓ matplotlib, seaborn, plotly
+
+Deep Learning:
+  ✓ PyTorch 2.0.0 with CUDA 11.8
+  ✓ transformers (HuggingFace)
+  ✓ fair-esm (Facebook ESM)
+  ✓ pytorch-lightning
+
+Utilities:
+  ✓ wandb (experiment tracking)
+  ✓ tensorboard (visualization)
+  ✓ hydra-core (configuration)
+  ✓ tqdm (progress bars)
+
+Bioinformatics:
+  ✓ biopython
+
+Development:
+  ✓ jupyter, jupyterlab, ipython
+  ✓ pytest, black, flake8
+
+
+================================================================================
+                          TROUBLESHOOTING
+================================================================================
+
+ISSUE: "conda: command not found"
+SOLUTION: Install Miniconda or Anaconda
+  Download: https://docs.conda.io/projects/miniconda/en/latest/
+
+ISSUE: CUDA not available (torch.cuda.is_available() = False)
+SOLUTION: Check NVIDIA drivers
+  Command: nvidia-smi
+  If not found, install NVIDIA GPU drivers
+
+ISSUE: Slow environment creation
+SOLUTION: Use mamba (faster)
+  conda install -c conda-forge mamba
+  mamba env create -f environment.yml
+
+ISSUE: Package conflicts
+SOLUTION: Clear cache and retry
+  conda clean --all
+  conda env create -f environment.yml --strict-channel-priority
+
+
+================================================================================
+                          VERIFICATION CHECKLIST
+================================================================================
+
+After activation, verify:
+
+[ ] Python 3.9 installed
+    Command: python --version
+    Expected: Python 3.9.x
+
+[ ] PyTorch 2.0.0 installed
+    Command: python -c "import torch; print(torch.__version__)"
+    Expected: 2.0.0
+
+[ ] CUDA 11.8 available
+    Command: python -c "import torch; print(torch.cuda.is_available())"
+    Expected: True
+
+[ ] Transformers installed
+    Command: python -c "import transformers; print(transformers.__version__)"
+    Expected: 4.30.0 or higher
+
+[ ] BioPython installed
+    Command: python -c "import Bio; print(Bio.__version__)"
+    Expected: 1.81 or higher
+
+[ ] All utilities available
+    Command: python -c "import wandb, tensorboard, hydra, biopython; print('All OK')"
+    Expected: All OK
+
+
+================================================================================
+                          NEXT STEPS
+================================================================================
+
+1. Create environment:
+   conda env create -f environment.yml
+
+2. Activate environment:
+   conda activate crispr_unipredict
+
+3. Verify installation:
+   python -c "import torch; print(torch.cuda.is_available())"
+
+4. Start development:
+   jupyter lab
+   or
+   python scripts/train_on_target.py
+
+5. For more details, see:
+   - CONDA_SETUP.md (detailed guide)
+   - README.md (project overview)
+   - SETUP_GUIDE.md (project setup)
+
+
+================================================================================
+                          FILE LOCATIONS
+================================================================================
+
+Environment file:
+  c:\Users\shahe\Desktop\both paper models\CRISPR-UniPredict\environment.yml
+
+Project root:
+  c:\Users\shahe\Desktop\both paper models\CRISPR-UniPredict\
+
+Data directory:
+  c:\Users\shahe\Desktop\both paper models\CRISPR-UniPredict\data\
+
+Scripts directory:
+  c:\Users\shahe\Desktop\both paper models\CRISPR-UniPredict\scripts\
+
+
+================================================================================
+                          SUPPORT & DOCUMENTATION
+================================================================================
+
+Conda Documentation:
+  https://docs.conda.io/
+
+PyTorch Documentation:
+  https://pytorch.org/docs/
+
+Transformers Documentation:
+  https://huggingface.co/docs/transformers/
+
+BioPython Documentation:
+  https://biopython.org/
+
+Project Documentation:
+  - README.md
+  - SETUP_GUIDE.md
+  - CONDA_SETUP.md
+  - INDEX.md
+
+
+================================================================================
+
+Ready to start? Run:
+
+  cd "c:\Users\shahe\Desktop\both paper models\CRISPR-UniPredict"
+  conda env create -f environment.yml
+  conda activate crispr_unipredict
+
+Happy coding! 🚀
+
+================================================================================

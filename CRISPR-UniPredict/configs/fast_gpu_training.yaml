@@ -1,0 +1,92 @@
+# Fast GPU training - Following FULL_SESSION_DOCUMENTATION.md guidance
+# Issue: Current RNA-FM encode_pair is done one-sample-at-a-time in Python loop
+# Solution: Disable RNA-FM strings for now, use fallback embedding path (fast)
+# This achieves high GPU utilization for validation run
+
+model:
+  name: CRISPR-UniPredict
+  version: 1.0
+  encoding:
+    max_sequence_length: 23
+    embedding_dim: 128
+    vocab_size: 6
+    use_one_hot: true
+    use_label_encoding: true
+    use_rna_fm: false  # DISABLE RNA-FM strings to avoid python loop bottleneck
+  msc:
+    in_channels: 4
+    out_channels: 64
+    kernel_sizes: [1, 3, 5, 7]
+    dropout: 0.35
+  bigru:
+    hidden_dim: 128
+    num_layers: 1
+    dropout: 0.35
+    bidirectional: true
+  mhsa:
+    embed_dim: 256
+    num_heads: 4
+    dropout: 0.35
+  rna_fm:
+    model_path: models/pretrained/rna_fm_t12.pt
+    freeze_layers: true
+    fine_tune_last_n: 2
+    embedding_dim: 640
+  fusion:
+    hidden_dim: 256
+    fusion_method: attention
+    num_branches: 3
+    dropout: 0.35
+  task_heads:
+    shared_dim: 256
+    on_target_hidden: [80, 20]
+    off_target_hidden: [80, 20]
+    dropout: 0.35
+
+training:
+  batch_size: 128  # Large batch for high GPU utilization
+  epochs: 5
+  learning_rate_encoder: 5.0e-4
+  learning_rate_heads: 1.0e-3
+  optimizer: AdamW
+  warmup_epochs: 1
+  weight_decay: 0.01
+  gradient_clip: 1.0
+  loss_fn: multi_task
+  on_target_loss_weight: 2.0
+  off_target_loss_weight: 1.0
+  on_target_loss_type: mse
+  off_target_loss_type: bce
+
+scheduler:
+  type: reduce_on_plateau
+  factor: 0.5
+  patience: 3
+  min_lr: 1.0e-6
+
+device:
+  use_cuda: true
+  mixed_precision: false
+  pin_memory: true
+
+data:
+  train_path: data/processed/combined/train.csv
+  val_path: data/processed/combined/val.csv
+  test_path: data/processed/combined/test.csv
+  num_workers: 0  # Windows compatibility per doc section 5
+  prefetch_factor: 4
+
+inference:
+  batch_size: 256  # Large inference batch
+
+logging:
+  use_tensorboard: true
+  tensorboard_dir: logs
+  checkpoint_dir: models/checkpoints
+  log_dir: logs
+  save_interval: 1
+  log_interval: 50
+  early_stopping_patience: 10
+  use_wandb: false
+
+seed: 42

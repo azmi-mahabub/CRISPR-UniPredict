@@ -1,0 +1,122 @@
+model:
+  name: CRISPR-UniPredict
+  version: 1.0
+  description: Unified Hybrid Neural Network for CRISPR Prediction
+  
+  encoding:
+    max_sequence_length: 23
+    embedding_dim: 128
+    vocab_size: 6
+    use_one_hot: true
+    use_label_encoding: true
+    use_rna_fm: false  # Disable RNA-FM for quick test
+  
+  msc:
+    in_channels: 4
+    out_channels: 64
+    kernel_sizes: [1, 3, 5, 7]
+    dropout: 0.35
+  
+  bigru:
+    hidden_dim: 128
+    num_layers: 1
+    dropout: 0.35
+    bidirectional: true
+  
+  mhsa:
+    embed_dim: 256
+    num_heads: 4
+    dropout: 0.35
+  
+  rna_fm:
+    model_path: models/pretrained/rna_fm_t12.pt
+    freeze_layers: true
+    fine_tune_last_n: 2
+    embedding_dim: 640
+  
+  fusion:
+    hidden_dim: 256
+    fusion_method: attention
+    num_branches: 3
+    dropout: 0.35
+  
+  task_heads:
+    shared_dim: 256
+    on_target_hidden: [80, 20]
+    off_target_hidden: [80, 20]
+    dropout: 0.35
+
+training:
+  batch_size: 64  # Larger batch for CPU
+  epochs: 5  # Quick test: 5 epochs
+  learning_rate_encoder: 5.0e-4
+  learning_rate_heads: 1.0e-3
+  optimizer: AdamW
+  warmup_epochs: 1  # Shorter warmup for quick test
+  weight_decay: 0.01
+  gradient_clip: 1.0
+  
+  loss:
+    on_target_loss: mse
+    off_target_loss: bce
+    loss_weights:
+      on_target: 1.0
+      off_target: 0.5
+  
+  scheduler:
+    type: reduce_on_plateau
+    patience: 2  # Shorter patience for quick test
+    factor: 0.5
+    min_lr: 1.0e-6
+    warmup_type: linear
+
+validation:
+  val_frequency: 1
+  early_stopping_patience: 3  # Shorter patience for quick test
+  early_stopping_metric: val_loss
+  early_stopping_mode: min
+
+data:
+  train_path: data/processed/combined/train.csv
+  val_path: data/processed/combined/val.csv
+  test_path: data/processed/combined/test.csv
+  num_workers: 0  # CPU-friendly
+  pin_memory: false
+  prefetch_factor: 2
+  
+  sampling:
+    strategy: balanced
+    on_target_ratio: 0.5
+    off_target_ratio: 0.5
+  
+  augmentation:
+    use_augmentation: false
+    augmentation_types: []
+
+device:
+  use_cuda: false  # CPU mode
+  device_id: 0
+  mixed_precision: false
+
+logging:
+  log_level: INFO
+  log_frequency: 10  # Log every 10 batches
+  save_checkpoint_frequency: 1  # Save every epoch
+  tensorboard: true
+  wandb: false
+
+inference:
+  batch_size: 32
+  num_workers: 0
+  device: cpu
+
+model_selection:
+  metric: val_loss
+  mode: min
+  patience: 3
+  save_best_only: true
+  save_last: true
+
+ensemble:
+  num_models: 1
+  voting_strategy: average

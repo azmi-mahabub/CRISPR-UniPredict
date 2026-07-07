@@ -1,0 +1,245 @@
+================================================================================
+TRANSFER LEARNING - QUICK START GUIDE
+================================================================================
+
+OVERVIEW
+========
+
+Adapt pretrained models to new species/conditions with limited data.
+Choose strategy based on available samples.
+
+QUICK START (5 minutes)
+======================
+
+# Feature extraction (100-1000 samples)
+python scripts/transfer_learning.py \
+  --pretrained_model models/checkpoints/best.pt \
+  --new_data data/mouse_crispr.csv \
+  --species_name mouse \
+  --strategy feature_extraction
+
+# Fine-tuning (1000-5000 samples)
+python scripts/transfer_learning.py \
+  --pretrained_model models/checkpoints/best.pt \
+  --new_data data/mouse_crispr.csv \
+  --species_name mouse \
+  --strategy fine_tuning
+
+# Full retraining (>5000 samples)
+python scripts/transfer_learning.py \
+  --pretrained_model models/checkpoints/best.pt \
+  --new_data data/mouse_crispr.csv \
+  --species_name mouse \
+  --strategy full_retraining
+
+TRANSFER STRATEGIES
+===================
+
+1. Feature Extraction
+   - Freeze: RNA-FM, MSC, BiGRU, MHSA, Fusion
+   - Train: Task heads only
+   - LR: 1e-3
+   - Epochs: 50
+   - Data: 100-1000 samples
+   - Time: 10-30 min
+   - Best for: Limited data, quick baseline
+
+2. Fine-tuning
+   - Freeze: Early layers
+   - Train: Late layers + task heads
+   - LR: 1e-4
+   - Epochs: 100
+   - Data: 1000-5000 samples
+   - Time: 30-60 min
+   - Best for: Moderate data, good balance
+
+3. Full Retraining
+   - Freeze: Nothing
+   - Train: All layers
+   - LR: 5e-4
+   - Epochs: 200
+   - Data: >5000 samples
+   - Time: 1-3 hours
+   - Best for: Abundant data, maximum adaptation
+
+COMMAND-LINE OPTIONS
+====================
+
+--pretrained_model PATH    Path to pretrained model (required)
+--new_data PATH           Path to new data CSV (required)
+--species_name NAME       Name of new species (default: new_species)
+--strategy STRATEGY       feature_extraction|fine_tuning|full_retraining
+--compare_strategies      Compare all strategies
+--output_dir PATH         Output directory
+--base_config PATH        Base configuration
+--epochs N               Override default epochs
+
+COMMON COMMANDS
+===============
+
+# Human to Mouse
+python scripts/transfer_learning.py \
+  --pretrained_model models/human_best.pt \
+  --new_data data/mouse_crispr.csv \
+  --species_name mouse \
+  --strategy fine_tuning
+
+# Compare all strategies
+python scripts/transfer_learning.py \
+  --pretrained_model models/best.pt \
+  --new_data data/new_species.csv \
+  --species_name new_species \
+  --compare_strategies
+
+# Different cell line
+python scripts/transfer_learning.py \
+  --pretrained_model models/hek293_best.pt \
+  --new_data data/jurkat_crispr.csv \
+  --species_name jurkat \
+  --strategy feature_extraction
+
+# Custom epochs
+python scripts/transfer_learning.py \
+  --pretrained_model models/best.pt \
+  --new_data data/new_species.csv \
+  --species_name new_species \
+  --strategy full_retraining \
+  --epochs 300
+
+PYTHON API
+==========
+
+# Load pretrained model
+from scripts.transfer_learning import TransferLearner
+
+learner = TransferLearner(
+    pretrained_model_path='models/checkpoints/best.pt',
+    device='cuda'
+)
+
+# Feature extraction mode
+learner.feature_extraction_mode()
+
+# Fine-tuning mode
+learner.fine_tuning_mode(n_layers_to_unfreeze=2)
+
+# Full retraining mode
+learner.full_retraining_mode()
+
+# Transfer to new species
+checkpoint, metrics = learner.transfer_to_new_species(
+    new_data_path='data/mouse_crispr.csv',
+    strategy='fine_tuning',
+    species_name='mouse'
+)
+
+# Compare strategies
+results = learner.compare_strategies(
+    new_data_path='data/mouse_crispr.csv',
+    species_name='mouse'
+)
+
+# Analyze results
+learner.analyze_transfer_performance(
+    results,
+    save_path='comparison.png'
+)
+
+DATA REQUIREMENTS
+=================
+
+Strategy             | Min Samples | Recommended | Max Samples
+---------------------|------------|-------------|----------
+Feature Extraction   | 100        | 500         | 1000
+Fine-tuning         | 1000       | 2500        | 5000
+Full Retraining     | 5000       | 10000+      | ∞
+
+PERFORMANCE
+===========
+
+Strategy             | Time (GPU) | Time (CPU) | Improvement
+---------------------|-----------|-----------|----------
+Feature Extraction   | 10-30 min  | 1-2 hours  | 1-5%
+Fine-tuning         | 30-60 min  | 2-4 hours  | 3-10%
+Full Retraining     | 1-3 hours  | 6-12 hours | 8-15%
+
+WORKFLOW
+========
+
+1. Prepare new data (CSV with sgrna, target columns)
+
+2. Choose strategy based on data size:
+   - <1000 samples: feature_extraction
+   - 1000-5000 samples: fine_tuning
+   - >5000 samples: full_retraining
+
+3. Run transfer learning:
+   python scripts/transfer_learning.py \
+     --pretrained_model models/best.pt \
+     --new_data data/new_species.csv \
+     --species_name new_species \
+     --strategy fine_tuning
+
+4. Evaluate results:
+   python scripts/evaluate.py \
+     --checkpoint models/transfer/new_species_best.pt \
+     --test_data data/test_set.csv
+
+5. Compare with baseline:
+   - Original pretrained model
+   - Training from scratch
+   - Other strategies
+
+BEST PRACTICES
+==============
+
+1. Start with feature extraction for quick baseline
+2. Compare all strategies to find best approach
+3. Use appropriate strategy for data size
+4. Monitor training with real-time dashboard
+5. Always validate on held-out test set
+6. Check data quality before transfer
+7. Use early stopping to prevent overfitting
+
+TROUBLESHOOTING
+===============
+
+"Not enough samples"
+  → Use feature extraction
+  → Collect more data
+  → Use data augmentation
+
+"Overfitting"
+  → Use feature extraction instead
+  → Increase early stopping patience
+  → Add regularization
+
+"Poor performance"
+  → Use fine-tuning or full retraining
+  → Collect more data
+  → Check data quality
+
+"CUDA out of memory"
+  → Reduce batch size
+  → Use gradient accumulation
+  → Use CPU training
+
+DOCUMENTATION
+==============
+
+Full guide: TRANSFER_LEARNING_GUIDE.md
+Implementation: scripts/transfer_learning.py
+
+SUPPORT
+=======
+
+Check implementation:
+  cat scripts/transfer_learning.py
+
+View guide:
+  cat TRANSFER_LEARNING_GUIDE.md
+
+Monitor training:
+  python scripts/monitor_training.py --log_dir logs/transfer_* --mode console
+
+================================================================================

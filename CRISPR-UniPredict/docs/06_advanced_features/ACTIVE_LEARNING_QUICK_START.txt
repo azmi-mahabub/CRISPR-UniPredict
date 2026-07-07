@@ -1,0 +1,212 @@
+================================================================================
+ACTIVE LEARNING - QUICK START GUIDE
+================================================================================
+
+OVERVIEW
+========
+
+Identify informative samples for experimental validation.
+Efficiently improve model with targeted labeling.
+
+QUICK START (5 minutes)
+======================
+
+# Run active learning (5 iterations)
+python scripts/active_learning.py \
+  --initial_model models/checkpoints/best.pt \
+  --unlabeled_data data/unlabeled_sequences.csv \
+  --n_iterations 5 \
+  --samples_per_iteration 1000
+
+# Results saved to: results/active_learning/
+
+SAMPLING STRATEGIES
+===================
+
+1. Uncertainty Sampling
+   - Select high-uncertainty predictions
+   - For regression: high variance
+   - For classification: near 0.5
+   - Best for: Quick improvement
+
+2. Diversity Sampling
+   - Select diverse samples
+   - Uses RNA-FM embeddings + clustering
+   - Covers feature space well
+   - Best for: Exploration
+
+3. Disagreement Sampling
+   - Select ensemble disagreement
+   - Requires ensemble model
+   - Identifies hard cases
+   - Best for: Challenging samples
+
+4. Combined Strategy (RECOMMENDED)
+   - Weights: uncertainty=0.4, diversity=0.4, disagreement=0.2
+   - Balanced approach
+   - Best for: General use
+
+COMMAND-LINE OPTIONS
+====================
+
+--initial_model PATH          Initial model checkpoint (required)
+--unlabeled_data PATH         Unlabeled sequences CSV (required)
+--ensemble_config PATH        Ensemble configuration (optional)
+--n_iterations N             Number of iterations (default: 5)
+--samples_per_iteration N    Samples per iteration (default: 1000)
+--output_dir PATH            Output directory
+--uncertainty_weight FLOAT   Uncertainty weight (default: 0.4)
+--diversity_weight FLOAT     Diversity weight (default: 0.4)
+--disagreement_weight FLOAT  Disagreement weight (default: 0.2)
+
+COMMON COMMANDS
+===============
+
+# Basic active learning
+python scripts/active_learning.py \
+  --initial_model models/checkpoints/best.pt \
+  --unlabeled_data data/unlabeled_sequences.csv
+
+# With ensemble
+python scripts/active_learning.py \
+  --initial_model models/checkpoints/best.pt \
+  --unlabeled_data data/unlabeled_sequences.csv \
+  --ensemble_config models/ensemble/ensemble_config.json
+
+# Focus on uncertainty
+python scripts/active_learning.py \
+  --initial_model models/checkpoints/best.pt \
+  --unlabeled_data data/unlabeled_sequences.csv \
+  --uncertainty_weight 0.8 \
+  --diversity_weight 0.1 \
+  --disagreement_weight 0.1
+
+# Focus on diversity
+python scripts/active_learning.py \
+  --initial_model models/checkpoints/best.pt \
+  --unlabeled_data data/unlabeled_sequences.csv \
+  --uncertainty_weight 0.2 \
+  --diversity_weight 0.7 \
+  --disagreement_weight 0.1
+
+# Custom iterations and samples
+python scripts/active_learning.py \
+  --initial_model models/checkpoints/best.pt \
+  --unlabeled_data data/unlabeled_sequences.csv \
+  --n_iterations 10 \
+  --samples_per_iteration 500
+
+WORKFLOW
+========
+
+1. Train initial model
+   python scripts/train.py --config configs/model_config.yaml
+
+2. Prepare unlabeled data (CSV with 'sgrna' column)
+
+3. Run active learning
+   python scripts/active_learning.py \
+     --initial_model models/checkpoints/best.pt \
+     --unlabeled_data data/unlabeled_sequences.csv
+
+4. Get experimental labels for selected samples
+   results/active_learning/selected_samples_iter_1.csv
+   results/active_learning/selected_samples_iter_2.csv
+   ...
+
+5. Combine datasets and retrain
+   python scripts/combine_datasets.py \
+     --original data/training_data.csv \
+     --new results/active_learning/selected_samples_iter_1.csv \
+     --output data/training_data_v2.csv
+   
+   python scripts/train.py --config configs/model_config.yaml
+
+6. Evaluate improvement
+   python scripts/evaluate.py --checkpoint models/checkpoints/best.pt
+
+7. Repeat iterations until performance plateaus
+
+OUTPUT FILES
+============
+
+results/active_learning/
+├── selected_samples_iter_1.csv    # Iteration 1 samples
+├── selected_samples_iter_2.csv    # Iteration 2 samples
+├── selected_samples_iter_3.csv    # Iteration 3 samples
+├── selected_samples_iter_4.csv    # Iteration 4 samples
+├── selected_samples_iter_5.csv    # Iteration 5 samples
+├── query_history.json             # Query history
+├── active_learning_report.png     # Visualization
+└── active_learning.log            # Detailed log
+
+PERFORMANCE
+===========
+
+Strategy               | Time      | Memory | Best For
+-----------------------|-----------|--------|----------
+Uncertainty Sampling   | Fast      | Low    | Quick improvement
+Diversity Sampling     | Slow      | Medium | Exploration
+Disagreement Sampling  | Slow      | Medium | Hard cases
+Combined Strategy      | Slow      | Medium | General use
+
+Scalability:
+  1K samples:   <1 minute
+  10K samples:  5-10 minutes
+  100K samples: 1-2 hours
+  1M samples:   10-20 hours
+
+BEST PRACTICES
+==============
+
+1. Use combined strategy with default weights
+2. Use ensemble for better disagreement sampling
+3. Adjust weights based on goal:
+   - Maximize coverage: increase diversity_weight
+   - Focus on hard cases: increase disagreement_weight
+   - Quick improvement: increase uncertainty_weight
+4. Monitor progress across iterations
+5. Stop when improvement plateaus
+
+TROUBLESHOOTING
+===============
+
+"CUDA out of memory"
+  → Reduce samples_per_iteration
+  → Use CPU: device='cpu'
+  → Process in batches
+
+"RNA-FM embeddings not available"
+  → Install RNA-FM (see INSTALL_RNA_FM.md)
+  → Use diversity_weight=0
+  → Use uncertainty + disagreement only
+
+"Ensemble not available"
+  → Train ensemble first
+  → Provide ensemble_config
+  → Or use uncertainty + diversity
+
+"No samples selected"
+  → Increase unlabeled dataset size
+  → Reduce samples_per_iteration
+  → Check query_history.json
+
+DOCUMENTATION
+==============
+
+Full guide: ACTIVE_LEARNING_GUIDE.md
+Active learning script: scripts/active_learning.py
+
+SUPPORT
+=======
+
+Check logs:
+  tail -f results/active_learning/active_learning.log
+
+View query history:
+  cat results/active_learning/query_history.json
+
+View report:
+  results/active_learning/active_learning_report.png
+
+================================================================================

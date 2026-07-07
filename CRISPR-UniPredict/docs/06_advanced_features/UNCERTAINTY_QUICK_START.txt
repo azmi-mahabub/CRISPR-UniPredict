@@ -1,0 +1,219 @@
+================================================================================
+UNCERTAINTY ESTIMATION - QUICK START GUIDE
+================================================================================
+
+OVERVIEW
+========
+
+Estimate prediction confidence with uncertainty intervals.
+Quantify reliability of predictions.
+
+QUICK START (5 minutes)
+======================
+
+# Load model and create estimator
+from utils.uncertainty import UncertaintyEstimator
+import torch
+
+model = CRISPRUniPredict(device='cuda')
+model.load_state_dict(torch.load('models/checkpoints/best.pt'))
+
+# Create estimator
+estimator = UncertaintyEstimator(model, method='mc_dropout')
+
+# Calibrate on validation set
+estimator.calibrate({
+    'predictions': val_predictions,
+    'targets': val_targets
+})
+
+# Make prediction with uncertainty
+result = estimator.predict_with_uncertainty(
+    sgrna_onehot, sgrna_label,
+    task_type='on_target'
+)
+
+print(f"Prediction: {result.prediction:.4f}")
+print(f"95% CI: [{result.confidence_interval[0]:.4f}, {result.confidence_interval[1]:.4f}]")
+print(f"Reliable: {result.is_reliable}")
+
+UNCERTAINTY METHODS
+===================
+
+1. Monte Carlo Dropout
+   - Run N forward passes with dropout enabled
+   - Compute mean and std of predictions
+   - Std = uncertainty
+   - Best for: Accuracy
+   - Time: 100x slower
+
+2. Ensemble Variance
+   - Use variance across ensemble members
+   - Higher variance = higher uncertainty
+   - Best for: Speed + accuracy
+   - Time: 5x slower (5 models)
+
+3. Conformal Prediction
+   - Calibrate on validation set
+   - Guarantees coverage at specified level
+   - Best for: Guarantees
+   - Time: 1x (same as prediction)
+
+4. Temperature Scaling
+   - Learn temperature parameter
+   - Calibrate probabilities
+   - Best for: Speed
+   - Time: 1x (same as prediction)
+
+COMMAND-LINE USAGE
+==================
+
+# MC Dropout
+estimator = UncertaintyEstimator(model, method='mc_dropout')
+
+# Ensemble
+from utils.uncertainty import EnsembleUncertaintyEstimator
+estimator = EnsembleUncertaintyEstimator(ensemble)
+
+# Conformal
+estimator = UncertaintyEstimator(model, method='conformal')
+
+# Temperature
+estimator = UncertaintyEstimator(model, method='temperature')
+
+COMMON PATTERNS
+===============
+
+# Basic prediction with uncertainty
+result = estimator.predict_with_uncertainty(
+    sgrna_onehot, sgrna_label,
+    task_type='on_target'
+)
+
+# Batch prediction
+results = estimator.batch_predict_with_uncertainty(
+    sgrna_onehot_batch, sgrna_label_batch,
+    task_type='on_target'
+)
+
+# Filter reliable predictions
+reliable = [r for r in results if r.is_reliable]
+
+# Get reliability score
+score = estimator.get_reliability_score(result)
+
+# Check if reliable
+is_reliable = estimator.is_reliable(result, threshold=0.1)
+
+RESULT FIELDS
+=============
+
+UncertaintyResult contains:
+  - prediction: Point estimate
+  - uncertainty: Uncertainty measure
+  - confidence_interval: (lower, upper)
+  - method: Estimation method
+  - is_reliable: Reliability flag
+  - reliability_score: Score 0-1
+
+Access as:
+  result.prediction
+  result.uncertainty
+  result.confidence_interval
+  result.is_reliable
+  result.reliability_score
+
+CALIBRATION
+===========
+
+# Calibrate on validation set
+estimator.calibrate({
+    'predictions': val_predictions,
+    'targets': val_targets
+})
+
+# Save calibration
+estimator.save_calibration('calibration.json')
+
+# Load calibration
+estimator.load_calibration('calibration.json')
+
+ANALYSIS
+========
+
+# Analyze calibration
+from utils.uncertainty import UncertaintyAnalyzer
+
+analyzer = UncertaintyAnalyzer(estimator)
+
+# Calibration metrics
+metrics = analyzer.analyze_calibration(val_predictions, val_targets)
+print(f"Mean error: {metrics['mean_error']:.4f}")
+
+# Coverage
+coverage = analyzer.compute_coverage(results, targets)
+print(f"Coverage: {coverage:.2%}")
+
+# Interval width
+width = analyzer.compute_interval_width(results)
+print(f"Average width: {width:.4f}")
+
+# Visualization
+analyzer.plot_uncertainty(results, targets, save_path='uncertainty.png')
+
+PERFORMANCE
+===========
+
+Method               | Time    | Memory | Best For
+---------------------|---------|--------|----------
+Temperature Scaling  | 1x      | 1x     | Speed
+Conformal Prediction | 1x      | 1x     | Guarantees
+Ensemble Variance    | 5x      | 5x     | Balance
+MC Dropout          | 100x    | 1x     | Accuracy
+
+BEST PRACTICES
+==============
+
+1. Always calibrate on validation set
+2. Validate coverage matches confidence level
+3. Use ensemble for good balance
+4. Monitor reliability scores
+5. Visualize uncertainty bands
+
+TROUBLESHOOTING
+===============
+
+"Calibration not performed"
+  → Call estimator.calibrate() first
+
+"Coverage too low"
+  → Use lower confidence level
+  → Check calibration data
+  → Use conformal prediction
+
+"Intervals too wide"
+  → Use ensemble for better estimates
+  → Increase calibration data
+  → Check data quality
+
+"CUDA out of memory"
+  → Reduce n_samples for MC dropout
+  → Use CPU: device='cpu'
+  → Use ensemble instead
+
+DOCUMENTATION
+==============
+
+Full guide: UNCERTAINTY_GUIDE.md
+Implementation: utils/uncertainty.py
+
+SUPPORT
+=======
+
+Check implementation:
+  cat utils/uncertainty.py
+
+View guide:
+  cat UNCERTAINTY_GUIDE.md
+
+================================================================================

@@ -1,0 +1,261 @@
+================================================================================
+                    CRISPR-UniPredict ENVIRONMENT SETUP
+                          COPY & PASTE COMMANDS
+================================================================================
+
+ENVIRONMENT DETAILS
+================================================================================
+Name:               crispr_unipredict
+Python:             3.9
+PyTorch:            2.0.0
+CUDA:               11.8
+Location:           c:\Users\shahe\Desktop\both paper models\CRISPR-UniPredict\
+
+================================================================================
+                    COMMAND 1: NAVIGATE TO PROJECT
+================================================================================
+
+cd "c:\Users\shahe\Desktop\both paper models\CRISPR-UniPredict"
+
+
+================================================================================
+                    COMMAND 2: CREATE ENVIRONMENT
+================================================================================
+
+conda env create -f environment.yml
+
+(This will take 5-15 minutes)
+
+
+================================================================================
+                    COMMAND 3: ACTIVATE ENVIRONMENT
+================================================================================
+
+conda activate crispr_unipredict
+
+(You should see "(crispr_unipredict)" in your terminal prompt)
+
+
+================================================================================
+                    COMMAND 4: VERIFY INSTALLATION
+================================================================================
+
+python -c "import torch; print(f'PyTorch: {torch.__version__}'); print(f'CUDA Available: {torch.cuda.is_available()}')"
+
+
+================================================================================
+                    ALL COMMANDS IN SEQUENCE
+================================================================================
+
+Run these commands one by one:
+
+1. Navigate:
+   cd "c:\Users\shahe\Desktop\both paper models\CRISPR-UniPredict"
+
+2. Create:
+   conda env create -f environment.yml
+
+3. Activate:
+   conda activate crispr_unipredict
+
+4. Verify:
+   python -c "import torch; print(f'PyTorch: {torch.__version__}'); print(f'CUDA Available: {torch.cuda.is_available()}')"
+
+
+================================================================================
+                    WINDOWS BATCH FILE (OPTIONAL)
+================================================================================
+
+Create a file named "setup_env.bat" with this content:
+
+────────────────────────────────────────────────────────────────────────────
+@echo off
+echo Creating CRISPR-UniPredict environment...
+cd "c:\Users\shahe\Desktop\both paper models\CRISPR-UniPredict"
+call conda env create -f environment.yml
+call conda activate crispr_unipredict
+echo Environment created and activated!
+python -c "import torch; print(f'PyTorch: {torch.__version__}'); print(f'CUDA Available: {torch.cuda.is_available()}')"
+pause
+────────────────────────────────────────────────────────────────────────────
+
+Then double-click the file to run it.
+
+
+================================================================================
+                    WINDOWS POWERSHELL SCRIPT (OPTIONAL)
+================================================================================
+
+Create a file named "setup_env.ps1" with this content:
+
+────────────────────────────────────────────────────────────────────────────
+Set-Location "c:\Users\shahe\Desktop\both paper models\CRISPR-UniPredict"
+Write-Host "Creating CRISPR-UniPredict environment..."
+conda env create -f environment.yml
+conda activate crispr_unipredict
+Write-Host "Environment created and activated!"
+python -c "import torch; print(f'PyTorch: {torch.__version__}'); print(f'CUDA Available: {torch.cuda.is_available()}')"
+────────────────────────────────────────────────────────────────────────────
+
+Then run in PowerShell:
+  powershell -ExecutionPolicy Bypass -File setup_env.ps1
+
+
+================================================================================
+                    WHAT GETS INSTALLED
+================================================================================
+
+Core Scientific:
+  ✓ numpy, pandas, scipy, scikit-learn
+
+Visualization:
+  ✓ matplotlib, seaborn, plotly
+
+Deep Learning:
+  ✓ PyTorch 2.0.0 with CUDA 11.8
+  ✓ torchvision, torchaudio
+
+Transformers & Models:
+  ✓ transformers (HuggingFace)
+  ✓ fair-esm (Facebook ESM)
+  ✓ pytorch-lightning
+
+Experiment Tracking:
+  ✓ wandb (Weights & Biases)
+  ✓ tensorboard
+  ✓ hydra-core
+
+Bioinformatics:
+  ✓ biopython
+
+Development Tools:
+  ✓ jupyter, jupyterlab, ipython
+  ✓ pytest, black, flake8
+
+
+================================================================================
+                    AFTER ACTIVATION - USEFUL COMMANDS
+================================================================================
+
+Start Jupyter Lab:
+  jupyter lab
+
+Run Python Script:
+  python scripts/train_on_target.py
+
+Run Tests:
+  pytest tests/
+
+Format Code:
+  black scripts/
+
+Lint Code:
+  flake8 scripts/
+
+Deactivate Environment:
+  conda deactivate
+
+List All Environments:
+  conda env list
+
+
+================================================================================
+                    VERIFICATION CHECKLIST
+================================================================================
+
+After running all commands, verify:
+
+[ ] Terminal shows: (crispr_unipredict) C:\Users\shahe\Desktop\...
+
+[ ] Python version is 3.9:
+    python --version
+
+[ ] PyTorch 2.0.0 installed:
+    python -c "import torch; print(torch.__version__)"
+
+[ ] CUDA 11.8 available:
+    python -c "import torch; print(torch.cuda.is_available())"
+
+[ ] Transformers installed:
+    python -c "import transformers; print(transformers.__version__)"
+
+[ ] BioPython installed:
+    python -c "import Bio; print(Bio.__version__)"
+
+
+================================================================================
+                    TROUBLESHOOTING
+================================================================================
+
+Problem: "conda: command not found"
+Solution: Install Miniconda from https://docs.conda.io/projects/miniconda/
+
+Problem: CUDA not available (shows False)
+Solution: Check NVIDIA drivers with: nvidia-smi
+
+Problem: Slow installation
+Solution: Use mamba instead:
+  conda install -c conda-forge mamba
+  mamba env create -f environment.yml
+
+Problem: Package conflicts
+Solution: Clear cache:
+  conda clean --all
+  conda env create -f environment.yml
+
+
+================================================================================
+                    QUICK START AFTER SETUP
+================================================================================
+
+1. Activate environment:
+   conda activate crispr_unipredict
+
+2. Navigate to project:
+   cd "c:\Users\shahe\Desktop\both paper models\CRISPR-UniPredict"
+
+3. Start Jupyter:
+   jupyter lab
+
+4. Or run a script:
+   python scripts/train_on_target.py
+
+
+================================================================================
+                    FILE INFORMATION
+================================================================================
+
+Environment File:
+  environment.yml
+
+Documentation Files:
+  - ENVIRONMENT_SUMMARY.md (detailed info)
+  - CONDA_SETUP.md (setup guide)
+  - QUICK_SETUP.txt (quick reference)
+  - SETUP_COMMANDS.txt (this file)
+
+
+================================================================================
+                    READY TO START?
+================================================================================
+
+Copy and paste this command into your terminal:
+
+cd "c:\Users\shahe\Desktop\both paper models\CRISPR-UniPredict" && conda env create -f environment.yml && conda activate crispr_unipredict
+
+
+Then verify with:
+
+python -c "import torch; print(f'PyTorch: {torch.__version__}'); print(f'CUDA: {torch.cuda.is_available()}')"
+
+
+================================================================================
+
+Questions? Check:
+  - ENVIRONMENT_SUMMARY.md (comprehensive guide)
+  - CONDA_SETUP.md (detailed instructions)
+  - README.md (project overview)
+
+Good luck! 🚀
+
+================================================================================

@@ -1,0 +1,222 @@
+================================================================================
+                    QUICK SPLIT REFERENCE
+                      CRISPR-UniPredict
+================================================================================
+
+✓ DATA SPLITTING COMPLETE
+================================================================================
+
+SPLIT STATISTICS
+────────────────────────────────────────────────────────────────────────────
+
+Total Samples:          3,402,077
+├── Train:              2,721,661 (80.00%)
+├── Validation:           340,208 (10.00%)
+└── Test:                 340,208 (10.00%)
+
+On-Target Distribution:
+├── Train:                233,311 (80.00%)
+├── Validation:            29,164 (10.00%)
+└── Test:                  29,164 (10.00%)
+
+Off-Target Distribution:
+├── Train:              2,488,350 (80.00%)
+├── Validation:           311,044 (10.00%)
+└── Test:                 311,044 (10.00%)
+
+Stratification: ✓ Perfect (8.57% on-target, 91.43% off-target in all splits)
+Data Leakage: ✓ None detected
+Random Seed: 42
+
+
+OUTPUT FILES
+────────────────────────────────────────────────────────────────────────────
+
+Location: data/processed/combined/
+
+train.csv               2,721,661 samples    215.06 MB
+val.csv                  340,208 samples     26.88 MB
+test.csv                 340,208 samples     26.88 MB
+split_statistics.pkl     Statistics file     357 bytes
+
+
+LOAD SPLITS IN PYTHON
+────────────────────────────────────────────────────────────────────────────
+
+import pandas as pd
+
+# Load splits
+train_df = pd.read_csv('data/processed/combined/train.csv')
+val_df = pd.read_csv('data/processed/combined/val.csv')
+test_df = pd.read_csv('data/processed/combined/test.csv')
+
+print(f"Train: {len(train_df):,} samples")
+print(f"Val: {len(val_df):,} samples")
+print(f"Test: {len(test_df):,} samples")
+
+
+LOAD STATISTICS
+────────────────────────────────────────────────────────────────────────────
+
+import pickle
+
+with open('data/processed/combined/split_statistics.pkl', 'rb') as f:
+    stats = pickle.load(f)
+
+print(f"Train: {stats['train_samples']:,}")
+print(f"Val: {stats['val_samples']:,}")
+print(f"Test: {stats['test_samples']:,}")
+
+
+FILTER BY TASK TYPE
+────────────────────────────────────────────────────────────────────────────
+
+# On-target only
+train_on = train_df[train_df['task_type'] == 'on_target']
+
+# Off-target only
+train_off = train_df[train_df['task_type'] == 'off_target']
+
+print(f"On-target: {len(train_on):,}")
+print(f"Off-target: {len(train_off):,}")
+
+
+FILTER BY DATASET SOURCE
+────────────────────────────────────────────────────────────────────────────
+
+# CRISPR_HNN only
+train_crispr = train_df[train_df['detection_method'] == 'CRISPR_HNN']
+
+# CCLMoff only
+train_cclmoff = train_df[train_df['detection_method'] == 'CCLMoff']
+
+print(f"CRISPR_HNN: {len(train_crispr):,}")
+print(f"CCLMoff: {len(train_cclmoff):,}")
+
+
+SPLIT COLUMNS
+────────────────────────────────────────────────────────────────────────────
+
+All splits contain 9 columns:
+
+1. sgrna_sequence       - 20-23 bp sgRNA sequence
+2. target_sequence      - DNA target site (off-target)
+3. pam_sequence         - PAM motif
+4. on_target_score      - Normalized 0-1 (on-target)
+5. off_target_label     - Binary 0/1 (off-target)
+6. dataset_source       - Original dataset name
+7. cell_line            - Experimental cell line
+8. detection_method     - Experimental method
+9. task_type            - 'on_target' or 'off_target'
+
+
+SPLITTING STRATEGY
+────────────────────────────────────────────────────────────────────────────
+
+Method:     Stratified train/val/test split
+Strategy:   80% train, 10% val, 10% test
+Stratified: By task_type (on_target/off_target)
+Random Seed: 42
+Data Leakage: None
+
+Step 1: Split into test (10%) and temp (90%)
+        Stratify by task_type
+        
+Step 2: Split temp into train (80% of original) and val (10% of original)
+        Stratify by task_type
+
+
+REPRODUCIBILITY
+────────────────────────────────────────────────────────────────────────────
+
+To reproduce the exact same splits:
+
+from utils.preprocessing.data_splitter import DataSplitter
+
+splitter = DataSplitter(random_seed=42)
+stats = splitter.create_splits()
+
+# Will produce identical splits every time
+
+
+NEXT STEPS
+────────────────────────────────────────────────────────────────────────────
+
+1. Train models:
+   python scripts/train_on_target.py
+   python scripts/train_off_target.py
+
+2. Evaluate models:
+   python scripts/evaluate_models.py
+
+3. View results:
+   Check results/ directory for model outputs
+
+
+VERIFICATION COMMANDS
+────────────────────────────────────────────────────────────────────────────
+
+# Count rows in each split
+wc -l data/processed/combined/train.csv    # 2,721,662 (+ 1 header)
+wc -l data/processed/combined/val.csv      # 340,209 (+ 1 header)
+wc -l data/processed/combined/test.csv     # 340,209 (+ 1 header)
+
+# Check file sizes
+ls -lh data/processed/combined/*.csv
+
+# Verify no duplicates
+python -c "import pandas as pd; \
+  t=pd.read_csv('data/processed/combined/train.csv'); \
+  v=pd.read_csv('data/processed/combined/val.csv'); \
+  print(f'Overlap: {len(set(t.index) & set(v.index))}')"
+
+
+TROUBLESHOOTING
+────────────────────────────────────────────────────────────────────────────
+
+Issue: "File not found: unified_dataset.csv"
+Solution: Run data formatter first
+  python utils/preprocessing/data_formatter.py
+
+Issue: "Memory error"
+Solution: Process in batches or use low_memory=False in pandas
+
+Issue: "Different splits than expected"
+Solution: Ensure random_seed=42 is used
+
+
+DETAILED DOCUMENTATION
+────────────────────────────────────────────────────────────────────────────
+
+For more information, see:
+  - DATA_SPLITTING_REPORT.md (detailed report)
+  - utils/preprocessing/README.md (preprocessing guide)
+  - utils/preprocessing/data_splitter.py (source code)
+
+
+KEY STATISTICS
+────────────────────────────────────────────────────────────────────────────
+
+Total Samples:          3,402,077
+Train Samples:          2,721,661 (80.00%)
+Val Samples:              340,208 (10.00%)
+Test Samples:             340,208 (10.00%)
+
+On-Target Total:          291,639 (8.57%)
+Off-Target Total:       3,110,438 (91.43%)
+
+Train On-Target:          233,311 (8.57%)
+Train Off-Target:       2,488,350 (91.43%)
+
+Val On-Target:             29,164 (8.57%)
+Val Off-Target:           311,044 (91.43%)
+
+Test On-Target:            29,164 (8.57%)
+Test Off-Target:          311,044 (91.43%)
+
+
+STATUS: ✓ READY FOR MODEL TRAINING
+================================================================================
+
+Generated: 2025-11-20
+Status: Complete
